@@ -1,4 +1,2 @@
-Curve_32.o
-Curve_64.o
-Curve_x86_32.nexe
-Curve_x86_64.nexe
+*.o
+*.nexe
