@@ -104,11 +104,9 @@ $(document).ready( function() {
     }
     
     var kPointRadius = 5.;
-    var showCtrl = false;
-    function FillCircle( pt )
+    function DrawCircle( pt )
     {
         ctx.arc( pt[0], pt[1], kPointRadius, 0, 2*Math.PI, false );
-        ctx.fill();
     }
     function draw()
     {
@@ -118,10 +116,10 @@ $(document).ready( function() {
         
         if( myCurveData == null ) return;
         
-        // A solid white background:
+        // A solid black background:
         // UPDATE: Let's leave it translucent.
-        // ctx.fillStyle = "rgba( 255,255,255, 1. )";
-        // ctx.fillRect( 0, 0, canvas.width, canvas.height );
+        ctx.fillStyle = "rgb( 0,0,0 )";
+        ctx.fillRect( 0, 0, canvas.width, canvas.height );
         
         {
             var endPoints = myCurveData.endPoints;
@@ -133,7 +131,11 @@ $(document).ready( function() {
             else if( interpPoints.length == 1 )
             {
                 ctx.fillStyle = "rgb( 0,0,255 )";
-                FillCircle( interpPoints[0] );
+                
+                ctx.beginPath();
+                DrawCircle( interpPoints[0] );
+                ctx.fill();
+                
                 return;
             }
             else
@@ -144,13 +146,19 @@ $(document).ready( function() {
                 
                 if (style != 'BSPLINE' && style != 'HERMITE'){
                     ctx.fillStyle = 'rgb(0,255,0)';
+                    
                     // Draw the two end points.
-                    FillCircle(endPoints[0]);
-                    FillCircle(endPoints[1]);
+                    ctx.beginPath();
+                    DrawCircle(endPoints[0]);
+                    DrawCircle(endPoints[1]);
+                    ctx.fill();
+                    
                     
                     // Connect end points with interpolation points with straight lines.
                     ctx.strokeStyle = 'rgb(0,255,0)';
                     ctx.lineWidth = 2;
+                    
+                    ctx.beginPath();
                     
                     ctx.moveTo(endPoints[0][0], endPoints[0][1]);
                     ctx.lineTo(interpPoints[0][0], interpPoints[0][1]);
@@ -164,6 +172,7 @@ $(document).ready( function() {
                 // Draw the curve.
                 ctx.lineWidth = 2;
                 ctx.strokeStyle = 'rgb(255,0,0)';
+                ctx.beginPath();
                 for( var i = 0; i < curve.length - 1; i++ ){
                     ctx.moveTo(curve[i][0], curve[i][1]);
                     ctx.lineTo(curve[i + 1][0], curve[i + 1][1]);
@@ -173,9 +182,11 @@ $(document).ready( function() {
                 // Draw interpolation points.
                 ctx.lineWidth = 2;
                 ctx.fillStyle = 'rgb(0,0,255)';
+                ctx.beginPath();
                 for( var i = 0; i < interpPoints.length; i++ ){
-                    FillCircle(interpPoints[i]);
+                    DrawCircle(interpPoints[i]);
                 }
+                ctx.fill();
                 
                 // Draw control points and lines that connect them
                 if (showCtrl && ctrlPoints.length > 0){
@@ -183,45 +194,53 @@ $(document).ready( function() {
                     ctx.strokeStyle = 'rgb(255,255,0)';
                     //B-spline, draw its control points
                     if (style == BSPLINE){
+                        ctx.beginPath();
                         for (var i = 0; i < interpPoints.length + 1; i++){
                             ctx.moveTo(ctrlPoints[i][0], ctrlPoints[i][1]);
                             ctx.lineTo(ctrlPoints[i + 1][0], ctrlPoints[i + 1][1]);
                         }
                         ctx.stroke();
+                        ctx.beginPath();
                         for (var i = 0; i < interpPoints.length + 1; i++){
-                            FillCircle(ctrlPoints[i]);
+                            DrawCircle(ctrlPoints[i]);
                         }
-                        FillCircle(ctrlPoints[interpPoints.length + 1]);
-                    }else
-                        if (style == HERMITE){
-                            for (var i = 0; i < interpPoints.length; i++)
-                            {
-                                ctx.moveTo(interpPoints[i][0], interpPoints[i][1]);
-                                ctx.lineTo(interpPoints[i][0] + ctrlPoints[i][0], interpPoints[i][1] + ctrlPoints[i][1]);
-                            }
-                            ctx.stroke();
-                            for (var i = 0; i < interpPoints.length; i++)
-                            {
-                                FillCircle(interpPoints[i] + ctrlPoints[i]);
-                            }
+                        DrawCircle(ctrlPoints[interpPoints.length + 1]);
+                        ctx.fill();
+                    }
+                    else if (style == HERMITE){
+                        ctx.beginPath();
+                        for (var i = 0; i < interpPoints.length; i++)
+                        {
+                            ctx.moveTo(interpPoints[i][0], interpPoints[i][1]);
+                            ctx.lineTo(interpPoints[i][0] + ctrlPoints[i][0], interpPoints[i][1] + ctrlPoints[i][1]);
                         }
-                        else{
+                        ctx.stroke();
+                        ctx.beginPath();
+                        for (var i = 0; i < interpPoints.length; i++)
+                        {
+                            DrawCircle(interpPoints[i] + ctrlPoints[i]);
+                        }
+                        ctx.fill();
+                    }else{
                         //Bezier curve, draw its control points
-                            for (var i = 0; i < interpPoints.length - 1; i++){
-                                ctx.moveTo(interpPoints[i][0], interpPoints[i][1]);
-                                ctx.lineTo(ctrlPoints[i * 2][0], ctrlPoints[i * 2][1]);
-                                
-                                ctx.moveTo(ctrlPoints[i * 2][0], ctrlPoints[i * 2][1]);
-                                ctx.lineTo(ctrlPoints[i * 2 + 1][0], ctrlPoints[i * 2 + 1][1]);
-                                
-                                ctx.moveTo(ctrlPoints[i * 2 + 1][0], ctrlPoints[i * 2 + 1][1]);
-                                ctx.lineTo(interpPoints[i + 1][0], interpPoints[i + 1][1]);
-                            }
-                            ctx.stroke();
-                            for (var i = 0; i < interpPoints.length - 1; i++){
-                                FillCircle(ctrlPoints[i * 2]);
-                                FillCircle(ctrlPoints[i * 2 + 1]);
-                            }
+                        ctx.beginPath();
+                        for (var i = 0; i < interpPoints.length - 1; i++){
+                            ctx.moveTo(interpPoints[i][0], interpPoints[i][1]);
+                            ctx.lineTo(ctrlPoints[i * 2][0], ctrlPoints[i * 2][1]);
+                            
+                            ctx.moveTo(ctrlPoints[i * 2][0], ctrlPoints[i * 2][1]);
+                            ctx.lineTo(ctrlPoints[i * 2 + 1][0], ctrlPoints[i * 2 + 1][1]);
+                            
+                            ctx.moveTo(ctrlPoints[i * 2 + 1][0], ctrlPoints[i * 2 + 1][1]);
+                            ctx.lineTo(interpPoints[i + 1][0], interpPoints[i + 1][1]);
+                        }
+                        ctx.stroke();
+                        ctx.beginPath();
+                        for (var i = 0; i < interpPoints.length - 1; i++){
+                            DrawCircle(ctrlPoints[i * 2]);
+                            DrawCircle(ctrlPoints[i * 2 + 1]);
+                        }
+                        ctx.fill();
                     }
                 }
             }
