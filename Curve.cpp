@@ -7,10 +7,26 @@
 
 #include "MyCurve.h"
 
+// Global functions for debugging.
+// NOTE: You can pass either a const char* or an std::string.
+namespace { pp::Instance* anyInstance; }
+void jsAlert( const std::string& msg )
+{
+    if( anyInstance )
+    {
+        anyInstance->PostMessage( pp::Var( std::string( "alert " ) + msg ) );
+    }
+}
+void jsLog( const std::string& msg )
+{
+    if( anyInstance )
+    {
+        anyInstance->PostMessage( pp::Var( std::string( "log " ) + msg ) );
+    }
+}
+
 namespace
 {
-// For debugging:
-pp::Instance* anyInstance;
 
 std::ostream& operator<<( std::ostream& out, const std::vector< MyCurve::Point >& pts )
 {
@@ -38,7 +54,8 @@ public:
     
     virtual void HandleMessage( const pp::Var& var_message )
     {
-        PostMessage( pp::Var( std::string( "log HandleMessage: " ) + var_message.AsString() ) );
+        // This slows everything down, but is useful for debugging:
+        jsLog( std::string( "log HandleMessage: " ) + var_message.AsString() );
         
         // We only expect string messages.
         if( !var_message.is_string() )
@@ -116,7 +133,7 @@ public:
         }
         else
         {
-            PostMessage( pp::Var( std::string( "alert Unknown command: " ) + var_message.AsString() ) );
+            jsAlert( std::string( "alert Unknown command: " ) + var_message.AsString() );
         }
     }
     
@@ -134,22 +151,6 @@ public:
 }; // ~CurveModule
 
 } // ~anonymous
-
-// Global functions for debugging.
-void jsAlert( const char* msg )
-{
-    if( anyInstance )
-    {
-        anyInstance->PostMessage( pp::Var( std::string( "alert " ) + msg ) );
-    }
-}
-void jsLog( const char* msg )
-{
-    if( anyInstance )
-    {
-        anyInstance->PostMessage( pp::Var( std::string( "log " ) + msg ) );
-    }
-}
 
 namespace pp
 {

@@ -5,9 +5,10 @@
 #include "MyCurve.h"
 #include "matrix.h"
 
-// Call these to raise a dialog box or log to the javascript console for debugging:
-extern void jsAlert( const char* msg );
-extern void jsLog( const char* msg );
+// Call these to raise a dialog box or log to the javascript console for debugging.
+// NOTE: You can pass either a const char* or an std::string.
+extern void jsAlert( const std::string& msg );
+extern void jsLog( const std::string& msg );
 
 namespace MyCurve
 {
