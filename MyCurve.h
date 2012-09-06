@@ -160,6 +160,10 @@ private:
 	void InterpBSpline();
 	//Interpolation using Hermite
 	void InterpHermite();
+	
+	float computeN(int n, int j, float t);
+	float computeDN(int n, int j, int t, int d);
+	Point BSpline(int degree, int j, float t);
 
 //////////////////////////////////////////////////////////////////////////
 // Member variables
