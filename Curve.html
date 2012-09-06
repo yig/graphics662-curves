@@ -193,7 +193,7 @@ $(document).ready( function() {
                     ctx.fillStyle = 'rgb(255,255,0)';
                     ctx.strokeStyle = 'rgb(255,255,0)';
                     //B-spline, draw its control points
-                    if (style == BSPLINE){
+                    if (style == 'BSPLINE'){
                         ctx.beginPath();
                         for (var i = 0; i < interpPoints.length + 1; i++){
                             ctx.moveTo(ctrlPoints[i][0], ctrlPoints[i][1]);
@@ -207,7 +207,7 @@ $(document).ready( function() {
                         DrawCircle(ctrlPoints[interpPoints.length + 1]);
                         ctx.fill();
                     }
-                    else if (style == HERMITE){
+                    else if (style == 'HERMITE'){
                         ctx.beginPath();
                         for (var i = 0; i < interpPoints.length; i++)
                         {

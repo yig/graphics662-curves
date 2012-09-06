@@ -4,11 +4,14 @@
 
 #include "MyCurve.h"
 #include "matrix.h"
+using math::matrix;
 
 // Call these to raise a dialog box or log to the javascript console for debugging.
 // NOTE: You can pass either a const char* or an std::string.
 extern void jsAlert( const std::string& msg );
 extern void jsLog( const std::string& msg );
+
+#define DIVISIONS 20
 
 namespace MyCurve
 {
@@ -154,7 +157,7 @@ void MyCurve::Interpolate()
 //                             For Bezier curve, between very pair of consecutive interpolation points,
 //                             there should be two control points. These four points determins the curve interpolation.
 //                             For B-Spline, there should be interpPoints.size() + 2 control points calculated from Ac = p.
-// Hint: If you want to implement B-Spline, you need to write functions to create the A matrix as in the handouts.
+// Hint: To implement B-Spline, you need to write functions to create the A matrix as in the handouts.
 //       Then you solve a linear system Ac = p, where p is the interpolation points vector and c are the control points.
 //       We have provided you with a datastructure to store and solve the linear system.
 //       Below is an example code, read the understand it.
@@ -289,7 +292,7 @@ void MyCurve::InterpBSpline(){
 }
 
 //////////////////////////////////////////////////////////////////////////
-// Bonus Points: Hermite Spline curve
+// Hermite Spline curve
 //////////////////////////////////////////////////////////////////////////
 // This function utilizes the following member variables 
 // interpPoints	- type: vector<Point>
