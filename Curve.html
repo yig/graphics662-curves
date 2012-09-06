@@ -113,6 +113,11 @@ $(document).ready( function() {
     $("#style").change( function() {
         var style = $("#style option:selected").val();
         nacl_module.postMessage( "SetInterpolationStyle " + style );
+        nacl_module.postMessage( "GetData" );
+        } );
+    $("#clear").click( function() {
+        nacl_module.postMessage( "ClearAll" );
+        nacl_module.postMessage( "GetData" );
         } );
 } );
 </script>
