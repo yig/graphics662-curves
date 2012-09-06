@@ -51,14 +51,36 @@ canvas
 <p id="tooltip"></p>
 </div>
 
+<div id="nacl_holder">
+<div id="nacl_status">
+    <p>Loading...</p>
+</div>
+</div>
+
 <script type='text/javascript'>
 /*<![CDATA[*/
 "use strict";
 
 $(document).ready( function() {
-
-
-
+    function receiveMessage( msg )
+    {
+        alert( msg.data );
+    }
+    function moduleDidLoad()
+    {
+        // alert( "module loaded!" );
+        $("#nacl_status").html( '<p>Loaded.</p>' );
+        $("#nacl_holder embed").hide();
+    }
+    
+    var nacl_holder = $("#nacl_holder");
+    nacl_holder.get(0).addEventListener( 'load', moduleDidLoad, true );
+    // This doesn't work for some reason:
+    // nacl_holder.load( function() { alert( "module loaded!" ); } );
+    // So I don't trust it for "message", either:
+    // nacl_holder.on( "message", function() { alert( "message!" ); } );
+    nacl_holder.get(0).addEventListener( "message", receiveMessage, true );
+    nacl_holder.append( '<embed name="nacl_module" id="nacl_module" width=100 height=100 src="Curve.nmf" type="application/x-nacl" />' );
 } );
 /*]]>*/
 </script>
