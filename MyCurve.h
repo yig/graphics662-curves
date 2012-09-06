@@ -9,6 +9,9 @@
 using std::vector;
 #include <cmath>
 
+namespace MyCurve
+{
+
 /*
  *	Point structure
  */
@@ -106,11 +109,6 @@ inline float dist(Point &p1, Point &p2){
 }
 
 /*
- *	Types of interpolations
- */
-enum {BERSTEIN, CASTELJAU, MATRIX, BSPLINE, HERMITE};
-
-/*
  *	MyCurve class implements the spline curves given interpolation points
  */
 class MyCurve  
@@ -122,12 +120,13 @@ public:
 	virtual ~MyCurve();
 
 //////////////////////////////////////////////////////////////////////////
+// Types of interpolations
+    enum InterpolationStyle { BERNSTEIN, CASTELJAU, MATRIX, BSPLINE, HERMITE, INVALID_STYLE };
+
+
+//////////////////////////////////////////////////////////////////////////
 // Member functions
 
-	//Draw the curve.
-	void DrawCurve();
-	//Draw a circle to indicate the points.
-	void DrawCircle(Point p);
 	//Add a data point, also set up the two end points if there are more than 1 point.
 	void AddPoint(float x, float y);
 	//Pick a interpolation point on the screen.
@@ -136,12 +135,21 @@ public:
 	void MovePicked(float x, float y);
 	//Clear screen. Reset all data vectors to empty and reset number of points to 0.
 	void ClearAll();
-	//Prepare data for interpolation:1.Calculate the control points 
+	//Select the interpolation style
+	void SetInterpolationStyle( InterpolationStyle s );
+	//Places the data into the output vectors.
+	void GetData( vector<Point>& endPoints, vector<Point>& interpPoints, vector<Point>& ctrlPoints, vector<Point>& curve );
+	
+private:
+    // Calls the helper functions below.
+    void Recalculate();
+    
+    //Prepare data for interpolation:1.Calculate the control points 
 	void ControlPoints();
 	//Interpolation selection
 	void Interpolate();
 	//Interpolation using CatmullRom method
-	void InterpBerstein();
+	void InterpBernstein();
 	//Interpolation using de Casteljau method
 	void InterpCasteljau();
 	//Interpolation using matrix form
@@ -151,18 +159,16 @@ public:
 	//Interpolation using Hermite
 	void InterpHermite();
 
-	
 //////////////////////////////////////////////////////////////////////////
 // Member variables
-
-	//Total number of interpolation points
-	int totalPoints;
+private:
+    
 	//The point that is picked by the user
 	Point* picked;
 	//Show control points on screen or not
 	bool showCtrl;
-	//Interpolation style, refer to enum {CATMULLROM, CASTELJAU, MATRIX, BSPLINE, HERMITE}.
-	int style;
+	//Interpolation style, refer to enum InterpolationStyle
+	InterpolationStyle style;
 	//Two end points that helps to shape the curve.
 	Point endPoints[2];
 	//Vector of interpolation points.
@@ -174,5 +180,7 @@ public:
 	//Vector of Lamda.
 	vector<float> L;
 };
+
+} // ~MyCurve
 
 #endif // __MyCurve_h__

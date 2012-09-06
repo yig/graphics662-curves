@@ -1,103 +1,66 @@
 <!DOCTYPE html>
 <html>
-
-  <!--
-  Copyright (c) 2012 The Native Client Authors. All rights reserved.
-  Use of this source code is governed by a BSD-style license that can be
-  found in the LICENSE file.
-  -->
-
 <head>
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <title>
+    Curve
+    </title>
+    
+    <!-- <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script> -->
+    <script src="jquery-1.7.1.min.js" type="text/javascript"></script>
 
-  <title>Curve</title>
+<style type="text/css">
+body
+{
+    font-family: myriad, verdana, sans-serif;
+}
 
-  <script type="text/javascript">
-    CurveModule = null;  // Global application object.
-    statusText = 'NO-STATUS';
+/* http://stackoverflow.com/questions/7059039/how-to-prevent-accidental-select-drag-highlight-on-webpage-when-drawing-off-html */
+.canvasholder
+{
+  -moz-user-select: none;
+  -khtml-user-select: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+canvas
+{
+    border: 1px solid #000;
+}
+</style>
 
-    // Indicate load success.
-    function moduleDidLoad() {
-      CurveModule = document.getElementById('Curve');
-      updateStatus('SUCCESS');
-    }
-
-    // The 'message' event handler.  This handler is fired when the NaCl module
-    // posts a message to the browser by calling PPB_Messaging.PostMessage()
-    // (in C) or pp::Instance.PostMessage() (in C++).  This implementation
-    // simply displays the content of the message in an alert panel.
-    function handleMessage(message_event) {
-      alert(message_event.data);
-    }
-
-    // If the page loads before the Native Client module loads, then set the
-    // status message indicating that the module is still loading.  Otherwise,
-    // do not change the status message.
-    function pageDidLoad() {
-      if (CurveModule == null) {
-        updateStatus('LOADING...');
-      } else {
-        // It's possible that the Native Client module onload event fired
-        // before the page's onload event.  In this case, the status message
-        // will reflect 'SUCCESS', but won't be displayed.  This call will
-        // display the current message.
-        updateStatus();
-      }
-    }
-
-    // Set the global status message.  If the element with id 'statusField'
-    // exists, then set its HTML to the status message as well.
-    // opt_message The message test.  If this is null or undefined, then
-    // attempt to set the element with id 'statusField' to the value of
-    // |statusText|.
-    function updateStatus(opt_message) {
-      if (opt_message)
-        statusText = opt_message;
-      var statusField = document.getElementById('status_field');
-      if (statusField) {
-        statusField.innerHTML = statusText;
-      }
-    }
-  </script>
 </head>
-<body onload="pageDidLoad()">
+<body>
 
-<h1>Native Client Module Curve</h1>
-<p>
-  <!-- Load the published .nexe.  This includes the 'nacl' attribute which
-  shows how to load multi-architecture modules.  Each entry in the "nexes"
-  object in the .nmf manifest file is a key-value pair: the key is the
-  instruction set architecture ('x86-32', 'x86-64', etc.); the value is a URL
-  for the desired NaCl module.
-  To load the debug versions of your .nexes, set the 'nacl' attribute to the
-  _dbg.nmf version of the manifest file.
+<div id="canvasholder">
+<form action="">
+<input type="button" id="clear" name="clear" value="Clear">
+<label for="add"><input type="radio" name="mode" value="add" id="add" checked>Add Point</label>
+<label for="move"><input type="radio" name="mode" value="add" id="move" checked>Move Point</label>
+<select name="style" id="style">
+<option value="BERNSTEIN" selected>BERNSTEIN</option>
+<option value="CASTELJAU">CASTELJAU</option>
+<option value="MATRIX">MATRIX</option>
+<option value="BSPLINE">BSPLINE</option>
+<option value="HERMITE">HERMITE</option>
+</select>
+</form>
 
-  Note: Since this NaCl module does not use any real-estate in the browser,
-  it's width and height are set to 0.
+<canvas id="surface" width="500" height="500"></canvas>
+<p id="tooltip"></p>
+</div>
 
-  Note: The <EMBED> element is wrapped inside a <DIV>, which has both a 'load'
-  and a 'message' event listener attached.  This wrapping method is used
-  instead of attaching the event listeners directly to the <EMBED> element to
-  ensure that the listeners are active before the NaCl module 'load' event
-  fires.  This also allows you to use PPB_Messaging.PostMessage() (in C) or
-  pp::Instance.PostMessage() (in C++) from within the initialization code in
-  your NaCl module.
-  -->
-  <div id="listener">
-    <script type="text/javascript">
-      var listener = document.getElementById('listener');
-      listener.addEventListener('load', moduleDidLoad, true);
-      listener.addEventListener('message', handleMessage, true);
-    </script>
+<script type='text/javascript'>
+/*<![CDATA[*/
+"use strict";
 
-    <embed name="nacl_module"
-       id="Curve"
-       width=0 height=0
-       src="Curve.nmf"
-       type="application/x-nacl" />
-  </div>
-</p>
+$(document).ready( function() {
 
-<h2>Status</h2>
-<div id="status_field">NO-STATUS</div>
+
+
+} );
+/*]]>*/
+</script>
+
 </body>
 </html>

@@ -8,15 +8,17 @@
 #define DIVISIONS 20
 #define GL_PI  3.1415926535f
 
+namespace MyCurve
+{
+
 //////////////////////////////////////////////////////////////////////
 // Construction/Destruction
 //////////////////////////////////////////////////////////////////////
 
 MyCurve::MyCurve()
 {
-	totalPoints = 0;
 	picked = NULL;
-	style = 0;
+	style = INVALID_STYLE;
 	showCtrl = false;
 }
 
@@ -27,26 +29,26 @@ MyCurve::~MyCurve()
 
 void MyCurve::AddPoint(float x, float y)
 {
-	totalPoints++;
 	Point tmp(x, y);
 	interpPoints.push_back(tmp);
 	float n;
-	if (totalPoints >= 2){
+	if (interpPoints.size() >= 2){
 		//If there are more than 1 interpolation point, set up the 2 end points to help determine the curve.
 		//They lie on the tangent of the first and last interpolation points.
 		tmp = interpPoints[0] - interpPoints[1];
 		n = tmp.Norm();
 		endPoints[0] = interpPoints[0] + tmp / n * 50;
-		tmp = interpPoints[totalPoints-1] - interpPoints[totalPoints-2];
+		tmp = interpPoints[interpPoints.size()-1] - interpPoints[interpPoints.size()-2];
 		n = tmp.Norm();
-		endPoints[1] = interpPoints[totalPoints-1] + tmp / n * 50;
+		endPoints[1] = interpPoints[interpPoints.size()-1] + tmp / n * 50;
 	}
 	
+    Recalculate();
 }
 
+#if 0
 void MyCurve::DrawCircle(Point p)
 {
-#if 0
 	int vertices = 20;
 	double r = 5.0;
 	double tmpX,tmpY;
@@ -64,8 +66,8 @@ void MyCurve::DrawCircle(Point p)
 		glVertex2d(tmpX + r * cos(i*Angle+Angle0), tmpY + r * sin(i*Angle+Angle0));
 	}
 	glEnd();
-#endif
 }
+#endif
 
 void MyCurve::PickPoint(float x, float y)
 {
@@ -93,25 +95,25 @@ void MyCurve::MovePicked(float x, float y)
 	if (picked != NULL){
 		(*picked).x = x;
 		(*picked).y = y;
+		
+		Recalculate();
 	}
-	
 }
 
 void MyCurve::ClearAll()
 {
-	totalPoints = 0;
 	interpPoints.clear();
 	ctrlPoints.clear();
 	curve.clear();
 }
 
+#if 0
 void MyCurve::DrawCurve()
 {
-#if 0
 	int i;
-	if (totalPoints <= 0)
+	if (interpPoints.empty())
 		return;
-	if (totalPoints == 1){//if there is only 1 interpolation point, draw it.
+	if (interpPoints.size() == 1){//if there is only 1 interpolation point, draw it.
 		glColor3f(0,0,1);
 		DrawCircle(interpPoints[0]);
 	}else{//if there are more than 1 point, draw the curve.
@@ -125,7 +127,7 @@ void MyCurve::DrawCurve()
 			glBegin(GL_LINES);
 			glVertex2d(endPoints[0].x, endPoints[0].y);
 			glVertex2d(interpPoints[0].x, interpPoints[0].y);		
-			glVertex2d(interpPoints[totalPoints - 1].x, interpPoints[totalPoints - 1].y);
+			glVertex2d(interpPoints[interpPoints.size() - 1].x, interpPoints[interpPoints.size() - 1].y);
 			glVertex2d(endPoints[1].x, endPoints[1].y);
 			glEnd();
 		}
@@ -144,7 +146,7 @@ void MyCurve::DrawCurve()
 		
 		//Draw interpolation points.
 		glColor3f(0.0,0.0,1.0);
-		for (i = 0; i < totalPoints; i++){ 
+		for (i = 0; i < interpPoints.size(); i++){ 
 			DrawCircle(interpPoints[i]);
 		}
 		//Draw control points and lines that connect them
@@ -152,17 +154,17 @@ void MyCurve::DrawCurve()
 			glColor3f(1.0, 1.0, 0.0);
 			//B-spline, draw its control points
 			if (style == BSPLINE){
-				for (i = 0; i < totalPoints + 1; i++){
+				for (i = 0; i < interpPoints.size() + 1; i++){
 					DrawCircle(ctrlPoints[i]);
 					glBegin(GL_LINES);
 					glVertex2d(ctrlPoints[i].x, ctrlPoints[i].y);
 					glVertex2d(ctrlPoints[i + 1].x, ctrlPoints[i + 1].y);
 					glEnd();
 				}
-				DrawCircle(ctrlPoints[totalPoints + 1]);
+				DrawCircle(ctrlPoints[interpPoints.size() + 1]);
 			}else
 				if (style == HERMITE){
-					for (i = 0; i < totalPoints; i++)
+					for (i = 0; i < interpPoints.size(); i++)
 					{
 						DrawCircle(interpPoints[i] + ctrlPoints[i]);
 						glBegin(GL_LINES);
@@ -173,7 +175,7 @@ void MyCurve::DrawCurve()
 				}
 				else{
 				//Bezier curve, draw its control points
-					for (i = 0; i < totalPoints - 1; i++){
+					for (i = 0; i < interpPoints.size() - 1; i++){
 						DrawCircle(ctrlPoints[i * 2]);
 						DrawCircle(ctrlPoints[i * 2 + 1]);
 						glBegin(GL_LINES);
@@ -190,7 +192,39 @@ void MyCurve::DrawCurve()
 			}			
 		}				
 	}
+}
 #endif
+
+void MyCurve::GetData( vector<Point>& endPoints_out, vector<Point>& interpPoints_out, vector<Point>& ctrlPoints_out, vector<Point>& curve_out )
+{
+    endPoints_out.clear();
+    if( interpPoints.size() >= 2 )
+    {
+        endPoints_out.resize( 2 );
+        endPoints_out.at(0) = endPoints[0];
+        endPoints_out.at(1) = endPoints[1];
+    }
+    
+    interpPoints_out = interpPoints;
+    ctrlPoints_out = ctrlPoints;
+    curve_out = curve;
+}
+
+void MyCurve::Recalculate()
+{
+    if( interpPoints.size() >= 2 )
+    {
+        //Calculate control points
+        ControlPoints();
+        //Interpolate the curve
+        Interpolate();
+    }
+}
+
+void MyCurve::SetInterpolationStyle( InterpolationStyle s )
+{
+    style = s;
+    Recalculate();
 }
 
 void MyCurve::Interpolate()
@@ -198,12 +232,14 @@ void MyCurve::Interpolate()
 	//Clear the old curve points
 	curve.clear();
 	//Depending on the selected style, interpolate the curve.
-	switch(style){
-	case BERSTEIN:	InterpBerstein(); break;
+	switch( style )
+	{
+	case BERNSTEIN:	InterpBernstein(); break;
 	case CASTELJAU:	InterpCasteljau(); break;
 	case MATRIX:	InterpMatrix(); break;
 	case BSPLINE:	InterpBSpline(); break;
 	case HERMITE:   InterpHermite(); break;
+	case INVALID_STYLE: break;
 	}
 }
 
@@ -215,14 +251,12 @@ void MyCurve::Interpolate()
 //				  discription: stores all the interpolation points
 // endPoints	- type: Point[2]
 //				  discription: stores the two end points tangent to the first and last interpolation point
-// totalPoints	- type: int
-//				  discription: total number of interpolation points
 // This function modifies the following member variables
 // ctrlPoints	- type: vector<Point>
 //				  discription: stores all the control points for curve interpolation and display.
 //                             For Bezier curve, between very pair of consecutive interpolation points,
 //                             there should be two control points. These four points determins the curve interpolation.
-//                             For B-Spline, there should be totalPoints + 2 control points calculated from Ac = p.
+//                             For B-Spline, there should be interpPoints.size() + 2 control points calculated from Ac = p.
 // Hint: If you want to implement B-Spline, you need to write functions to create the A matrix as in the handouts.
 //       Then you solve a linear system Ac = p, where p is the interpolation points vector and c are the control points.
 //       We have provided you with a datastructure to store and solve the linear system.
@@ -245,7 +279,7 @@ void MyCurve::ControlPoints()
 
 	switch(style)
 	{
-	case BERSTEIN:
+	case BERNSTEIN:
 		break;
 	case CASTELJAU:
 		break;
@@ -264,20 +298,23 @@ void MyCurve::ControlPoints()
 		//if (showCtrl)
 		//{
 		//	ctrlPoints[0] = endPoints[0] - interpPoints[0];
-		//	ctrlPoints[totalPoints - 1] = endPoints[1] - interpPoints[totalPoints - 1];
+		//	ctrlPoints[interpPoints.size() - 1] = endPoints[1] - interpPoints[interpPoints.size() - 1];
 		//}		
 		//else
 		//{
 		//	endPoints[0] = interpPoints[0] + ctrlPoints[0];
-		//	endPoints[1] = interpPoints[totalPoints - 1] + ctrlPoints[totalPoints - 1];
+		//	endPoints[1] = interpPoints[interpPoints.size() - 1] + ctrlPoints[interpPoints.size() - 1];
 		//}
 		
 		break;
-	}	
+    
+    case INVALID_STYLE:
+	    break;
+	}
 }
 
 //////////////////////////////////////////////////////////////////////////
-// Cubic Berstein Bezier Spline
+// Cubic BERNSTEIN Bezier Spline
 //////////////////////////////////////////////////////////////////////////
 // This function utilizes the following member variables 
 // interpPoints	- type: vector<Point>
@@ -288,12 +325,10 @@ void MyCurve::ControlPoints()
 //                             These four points determins the curve interpolation.
 // endPoints	- type: Point[2]
 //				  discription: stores the two end points tangent to the first and last interpolation point
-// totalPoints	- type: int
-//				  discription: total number of interpolation points
 // This function modifies the following member variables
 // curve		- type: vector<Point>
 //				  discription: stores all the points that form the curve, including all interpolation points 
-void MyCurve::InterpBerstein(){
+void MyCurve::InterpBernstein(){
 	// ADD YOUR CODE HERE
 }
 
@@ -309,8 +344,6 @@ void MyCurve::InterpBerstein(){
 //                             These four points determins the curve interpolation.
 // endPoints	- type: Point[2]
 //				  discription: stores the two end points tangent to the first and last interpolation point
-// totalPoints	- type: int
-//				  discription: total number of interpolation points
 // This function modifies the following member variables
 // curve		- type: vector<Point>
 //				  discription: stores all the points that form the curve, including all interpolation points 
@@ -331,8 +364,6 @@ void MyCurve::InterpCasteljau(){
 //                             These four points determins the curve interpolation.
 // endPoints	- type: Point[2]
 //				  discription: stores the two end points tangent to the first and last interpolation point
-// totalPoints	- type: int
-//				  discription: total number of interpolation points
 // This function modifies the following member variables
 // curve		- type: vector<Point>
 //				  discription: stores all the points that form the curve, including all interpolation points 
@@ -349,11 +380,9 @@ void MyCurve::InterpMatrix(){
 //				  discription: stores all the interpolation points
 // ctrlPoints	- type: vector<Point>
 //				  discription: stores the control points that helps to determine the curve.
-//                             There should be totalPoints + 2 control points.
+//                             There should be interpPoints.size() + 2 control points.
 // endPoints	- type: Point[2]
 //				  discription: stores the two end points tangent to the first and last interpolation point
-// totalPoints	- type: int
-//				  discription: total number of interpolation points
 // This function modifies the following member variables
 // curve		- type: vector<Point>
 //				  discription: stores all the points that form the curve, including all interpolation points
@@ -370,9 +399,7 @@ void MyCurve::InterpBSpline(){
 //				  discription: stores all the interpolation points
 // ctrlPoints	- type: vector<Point>
 //				  discription: stores the control points that helps to determine the curve.
-//                             There should be totalPoints control points.
-// totalPoints	- type: int
-//				  discription: total number of interpolation points
+//                             There should be interpPoints.size() control points.
 // This function modifies the following member variables
 // curve		- type: vector<Point>
 //				  discription: stores all the points that form the curve, including all interpolation points
@@ -382,3 +409,4 @@ void MyCurve::InterpHermite()
 
 }
 
+} // ~MyCurve
