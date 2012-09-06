@@ -5,9 +5,6 @@
 #include "MyCurve.h"
 #include "matrix.h"
 
-#define DIVISIONS 20
-#define GL_PI  3.1415926535f
-
 // Call these to raise a dialog box or log to the javascript console for debugging:
 extern void jsAlert( const char* msg );
 extern void jsLog( const char* msg );
@@ -50,29 +47,6 @@ void MyCurve::AddPoint(float x, float y)
     Recalculate();
 }
 
-#if 0
-void MyCurve::DrawCircle(Point p)
-{
-	int vertices = 20;
-	double r = 5.0;
-	double tmpX,tmpY;
-	double Angle, Angle0;
-	
-	Angle = (2*GL_PI)/vertices;
-	Angle0 = 0.0;
-	
-	tmpX=p.x;
-	tmpY=p.y;
-	
-	glBegin(GL_POLYGON);
-	
-	for (int i = 0; i < vertices; i++) {
-		glVertex2d(tmpX + r * cos(i*Angle+Angle0), tmpY + r * sin(i*Angle+Angle0));
-	}
-	glEnd();
-}
-#endif
-
 void MyCurve::PickPoint(float x, float y)
 {
 	float radius = 5.0;
@@ -111,94 +85,6 @@ void MyCurve::ClearAll()
 	curve.clear();
 }
 
-#if 0
-void MyCurve::DrawCurve()
-{
-	int i;
-	if (interpPoints.empty())
-		return;
-	if (interpPoints.size() == 1){//if there is only 1 interpolation point, draw it.
-		glColor3f(0,0,1);
-		DrawCircle(interpPoints[0]);
-	}else{//if there are more than 1 point, draw the curve.
-		if (style != BSPLINE && style != HERMITE){
-			glColor3f(0.0,1.0,0.0);
-			//Draw the two end points.
-			DrawCircle(endPoints[0]);
-			DrawCircle(endPoints[1]);
-			//Connect end points with interpolation points with straight lines.
-			glColor3f(0.0,1.0,0.0);
-			glBegin(GL_LINES);
-			glVertex2d(endPoints[0].x, endPoints[0].y);
-			glVertex2d(interpPoints[0].x, interpPoints[0].y);		
-			glVertex2d(interpPoints[interpPoints.size() - 1].x, interpPoints[interpPoints.size() - 1].y);
-			glVertex2d(endPoints[1].x, endPoints[1].y);
-			glEnd();
-		}
-		//Calculate control points
-		ControlPoints();
-		//Interpolate the curve
-		Interpolate();
-		//Draw the curve
-		glColor3f(1.0, 0.0, 0.0);
-		for (i = 0; i < int(curve.size() - 1); i++){
-			glBegin(GL_LINES);
-			glVertex2d(curve[i].x, curve[i].y);
-			glVertex2d(curve[i + 1].x, curve[i + 1].y);
-			glEnd();
-		}
-		
-		//Draw interpolation points.
-		glColor3f(0.0,0.0,1.0);
-		for (i = 0; i < interpPoints.size(); i++){ 
-			DrawCircle(interpPoints[i]);
-		}
-		//Draw control points and lines that connect them
-		if (showCtrl && ctrlPoints.size() > 0){
-			glColor3f(1.0, 1.0, 0.0);
-			//B-spline, draw its control points
-			if (style == BSPLINE){
-				for (i = 0; i < interpPoints.size() + 1; i++){
-					DrawCircle(ctrlPoints[i]);
-					glBegin(GL_LINES);
-					glVertex2d(ctrlPoints[i].x, ctrlPoints[i].y);
-					glVertex2d(ctrlPoints[i + 1].x, ctrlPoints[i + 1].y);
-					glEnd();
-				}
-				DrawCircle(ctrlPoints[interpPoints.size() + 1]);
-			}else
-				if (style == HERMITE){
-					for (i = 0; i < interpPoints.size(); i++)
-					{
-						DrawCircle(interpPoints[i] + ctrlPoints[i]);
-						glBegin(GL_LINES);
-						glVertex2d(interpPoints[i].x, interpPoints[i].y);
-						glVertex2d(interpPoints[i].x + ctrlPoints[i].x, interpPoints[i].y + ctrlPoints[i].y);
-						glEnd();
-					}
-				}
-				else{
-				//Bezier curve, draw its control points
-					for (i = 0; i < interpPoints.size() - 1; i++){
-						DrawCircle(ctrlPoints[i * 2]);
-						DrawCircle(ctrlPoints[i * 2 + 1]);
-						glBegin(GL_LINES);
-						glVertex2d(interpPoints[i].x, interpPoints[i].y);
-						glVertex2d(ctrlPoints[i * 2].x, ctrlPoints[i * 2].y);
-						
-						glVertex2d(ctrlPoints[i * 2].x, ctrlPoints[i * 2].y);
-						glVertex2d(ctrlPoints[i * 2 + 1].x, ctrlPoints[i * 2 + 1].y);
-						
-						glVertex2d(ctrlPoints[i * 2 + 1].x, ctrlPoints[i * 2 + 1].y);
-						glVertex2d(interpPoints[i + 1].x, interpPoints[i + 1].y);
-						glEnd();
-					}
-			}			
-		}				
-	}
-}
-#endif
-
 void MyCurve::GetData( vector<Point>& endPoints_out, vector<Point>& interpPoints_out, vector<Point>& ctrlPoints_out, vector<Point>& curve_out )
 {
     endPoints_out.clear();
@@ -223,6 +109,12 @@ void MyCurve::Recalculate()
         //Interpolate the curve
         Interpolate();
     }
+}
+
+void MyCurve::SetShowControlPoints( bool whether )
+{
+    showCtrl = whether;
+    Recalculate();
 }
 
 void MyCurve::SetInterpolationStyle( InterpolationStyle s )

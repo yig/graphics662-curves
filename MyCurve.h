@@ -137,6 +137,8 @@ public:
 	void ClearAll();
 	//Select the interpolation style
 	void SetInterpolationStyle( InterpolationStyle s );
+	//Choose whether or not control points will be shown (affects curve calculation).
+	void SetShowControlPoints( bool whether );
 	//Places the data into the output vectors.
 	void GetData( vector<Point>& endPoints, vector<Point>& interpPoints, vector<Point>& ctrlPoints, vector<Point>& curve );
 	

@@ -74,6 +74,13 @@ public:
         {
             m_myCurve.ClearAll();
         }
+        else if( cmd == "SetShowControlPoints" )
+        {
+            bool ctrlPoints;
+            msgstream >> std::boolalpha >> ctrlPoints;
+            
+            m_myCurve.SetShowControlPoints( ctrlPoints );
+        }
         else if( cmd == "SetInterpolationStyle" )
         {
             std::string stylestr;
@@ -98,7 +105,7 @@ public:
             // Package up some JSON and post it.
             std::ostringstream packet;
             // Set precision to 24 to preserve double-precision accuracy.
-            packet << std::setprecision( 24 );
+            packet << std::setprecision( 24 ) << std::boolalpha;
             packet << "{ \"endPoints\": " << endPoints;
             packet << ", \"interpPoints\": " << interpPoints;
             packet << ", \"ctrlPoints\": " << ctrlPoints;
