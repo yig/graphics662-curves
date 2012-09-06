@@ -1,8 +1,0 @@
-export NACL_SDK_ROOT=/Users/yotam/Work/ext/nacl/nacl_sdk/pepper_21
-if [ ! -x "${NACL_SDK_ROOT}"/examples/Curve-nacl ]
-then
-    LOC="${PWD}"
-    ( cd "${NACL_SDK_ROOT}/examples" && ln -s "${LOC}" )
-fi
-
-# open http://localhost:5103/Curve-nacl/Curve.html
