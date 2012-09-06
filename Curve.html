@@ -2,6 +2,9 @@
 <html>
 <head>
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="-1" />
+    
     <title>
     Curve
     </title>
@@ -28,6 +31,11 @@ canvas
 {
     border: 1px solid #000;
 }
+
+#nacl_holder embed
+{
+    float: left;
+}
 </style>
 
 </head>
@@ -39,7 +47,7 @@ canvas
 <label for="add"><input type="radio" name="mode" value="add" id="add" checked>Add Point</label>
 <label for="move"><input type="radio" name="mode" value="add" id="move" checked>Move Point</label>
 <select name="style" id="style">
-<option value="BERNSTEIN" selected>BERNSTEIN</option>
+<option value="BERNSTEIN" selected="selected">BERNSTEIN</option>
 <option value="CASTELJAU">CASTELJAU</option>
 <option value="MATRIX">MATRIX</option>
 <option value="BSPLINE">BSPLINE</option>
@@ -58,19 +66,39 @@ canvas
 </div>
 
 <script type='text/javascript'>
-/*<![CDATA[*/
 "use strict";
 
 $(document).ready( function() {
-    function receiveMessage( msg )
-    {
-        alert( msg.data );
-    }
+    var nacl_module = null;
+    
     function moduleDidLoad()
     {
         // alert( "module loaded!" );
         $("#nacl_status").html( '<p>Loaded.</p>' );
-        $("#nacl_holder embed").hide();
+        
+        // THIS CAUSES THE EMBED TO STOP WORKING:
+        // $("#nacl_holder embed").hide();
+        
+        nacl_module = $("#nacl_module").get(0);
+    }
+    
+    function handleMessage( msg )
+    {
+        // alert( msg.data );
+        
+        var token = msg.data.split(' ',1);
+        if( 'alert' == token )
+        {
+            alert( msg.data.slice( 'alert'.length + 1 ) );
+        }
+        else if( 'log' == token )
+        {
+            console.log( msg.data.slice( 'log'.length + 1 ) );
+        }
+        else if( 'GetData' == token )
+        {
+            console.log( $.parseJSON( msg.data.slice( 'GetData'.length + 1 ) ) );
+        }
     }
     
     var nacl_holder = $("#nacl_holder");
@@ -79,10 +107,14 @@ $(document).ready( function() {
     // nacl_holder.load( function() { alert( "module loaded!" ); } );
     // So I don't trust it for "message", either:
     // nacl_holder.on( "message", function() { alert( "message!" ); } );
-    nacl_holder.get(0).addEventListener( "message", receiveMessage, true );
-    nacl_holder.append( '<embed name="nacl_module" id="nacl_module" width=100 height=100 src="Curve.nmf" type="application/x-nacl" />' );
+    nacl_holder.get(0).addEventListener( 'message', handleMessage, true );
+    nacl_holder.append( '<embed name="nacl_module" id="nacl_module" width=40 height=40 src="Curve.nmf" type="application/x-nacl" />' );
+    
+    $("#style").change( function() {
+        var style = $("#style option:selected").val();
+        nacl_module.postMessage( "SetInterpolationStyle " + style );
+        } );
 } );
-/*]]>*/
 </script>
 
 </body>

@@ -28,9 +28,19 @@ class CurveInstance : public pp::Instance
 {
 public:
     explicit CurveInstance( PP_Instance instance ) : pp::Instance( instance ) {}
+    virtual ~CurveInstance() {}
     
-    void HandleMessage( const pp::Var& var_message )
+    virtual void HandleMessage( const pp::Var& var_message )
     {
+        PostMessage( pp::Var( std::string( "log HandleMessage: " ) + var_message.AsString() ) );
+        
+        // We only expect string messages.
+        if( !var_message.is_string() )
+        {
+            return;
+        }
+        
+        // Turn the message into an istream for processing.
         std::istringstream msgstream( var_message.AsString() );
         
         std::string cmd;
@@ -89,7 +99,11 @@ public:
             packet << ", \"curve\": " << curve;
             packet << "}";
             
-            PostMessage( pp::Var( packet.str() ) );
+            PostMessage( pp::Var( std::string("GetData ") + packet.str() ) );
+        }
+        else
+        {
+            PostMessage( pp::Var( std::string( "alert Unknown command: " ) + var_message.AsString() ) );
         }
     }
     
