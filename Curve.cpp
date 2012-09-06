@@ -9,6 +9,8 @@
 
 namespace
 {
+// For debugging:
+pp::Instance* anyInstance;
 
 std::ostream& operator<<( std::ostream& out, const std::vector< MyCurve::Point >& pts )
 {
@@ -27,7 +29,11 @@ std::ostream& operator<<( std::ostream& out, const std::vector< MyCurve::Point >
 class CurveInstance : public pp::Instance
 {
 public:
-    explicit CurveInstance( PP_Instance instance ) : pp::Instance( instance ) {}
+    explicit CurveInstance( PP_Instance instance ) : pp::Instance( instance )
+    {
+        // For debugging:
+        anyInstance = this;
+    }
     virtual ~CurveInstance() {}
     
     virtual void HandleMessage( const pp::Var& var_message )
@@ -121,6 +127,22 @@ public:
 }; // ~CurveModule
 
 } // ~anonymous
+
+// Global functions for debugging.
+void jsAlert( const char* msg )
+{
+    if( anyInstance )
+    {
+        anyInstance->PostMessage( pp::Var( std::string( "alert " ) + msg ) );
+    }
+}
+void jsLog( const char* msg )
+{
+    if( anyInstance )
+    {
+        anyInstance->PostMessage( pp::Var( std::string( "log " ) + msg ) );
+    }
+}
 
 namespace pp
 {

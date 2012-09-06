@@ -44,8 +44,8 @@ canvas
 <div id="canvasholder">
 <form action="">
 <input type="button" id="clear" name="clear" value="Clear">
-<label for="add"><input type="radio" name="mode" value="add" id="add" checked>Add Point</label>
-<label for="move"><input type="radio" name="mode" value="add" id="move" checked>Move Point</label>
+<label for="add"><input type="radio" name="mouse_mode" value="add" id="add" checked="checked">Add Point</label>
+<label for="move"><input type="radio" name="mouse_mode" value="move" id="move">Move Point</label>
 <select name="style" id="style">
 <option value="BERNSTEIN" selected="selected">BERNSTEIN</option>
 <option value="CASTELJAU">CASTELJAU</option>
@@ -55,7 +55,7 @@ canvas
 </select>
 </form>
 
-<canvas id="surface" width="500" height="500"></canvas>
+<canvas id="curve_canvas" width="500" height="500"></canvas>
 <p id="tooltip"></p>
 </div>
 
@@ -69,19 +69,18 @@ canvas
 "use strict";
 
 $(document).ready( function() {
+    ///
+    /// Global variables.
+    ///
     var nacl_module = null;
+    var myCurveData = null;
+    var canvas = null;
+    var ctx = null;
     
-    function moduleDidLoad()
-    {
-        // alert( "module loaded!" );
-        $("#nacl_status").html( '<p>Loaded.</p>' );
-        
-        // THIS CAUSES THE EMBED TO STOP WORKING:
-        // $("#nacl_holder embed").hide();
-        
-        nacl_module = $("#nacl_module").get(0);
-    }
     
+    ///
+    /// Global functions.
+    ///
     function handleMessage( msg )
     {
         // alert( msg.data );
@@ -97,28 +96,169 @@ $(document).ready( function() {
         }
         else if( 'GetData' == token )
         {
-            console.log( $.parseJSON( msg.data.slice( 'GetData'.length + 1 ) ) );
+            myCurveData = $.parseJSON( msg.data.slice( 'GetData'.length + 1 ) );
+            // console.log( myCurveData );
+            draw();
         }
     }
     
-    var nacl_holder = $("#nacl_holder");
-    nacl_holder.get(0).addEventListener( 'load', moduleDidLoad, true );
-    // This doesn't work for some reason:
-    // nacl_holder.load( function() { alert( "module loaded!" ); } );
-    // So I don't trust it for "message", either:
-    // nacl_holder.on( "message", function() { alert( "message!" ); } );
-    nacl_holder.get(0).addEventListener( 'message', handleMessage, true );
-    nacl_holder.append( '<embed name="nacl_module" id="nacl_module" width=40 height=40 src="Curve.nmf" type="application/x-nacl" />' );
+    function draw()
+    {
+        if( canvas === null || ctx === null ) return;
+        
+        ctx.clearRect( 0, 0, canvas.width, canvas.height );
+        
+        if( myCurveData == null ) return;
+        
+        // A solid white background:
+        // UPDATE: Let's leave it translucent.
+        // ctx.fillStyle = "rgba( 255,255,255, 1. )";
+        // ctx.fillRect( 0, 0, canvas.width, canvas.height );
+        
+    }
+    // Create the need_redisplay function.
+    // var need_redisplay = $.throttle( 16, draw );
+    // var GetDataThrottled = $.throttle( 16, function() { nacl_module.postMessage( "GetData" ); } );
+    var need_redisplay = $.throttle( 16, function() { nacl_module.postMessage( "GetData" ); } );
     
-    $("#style").change( function() {
-        var style = $("#style option:selected").val();
-        nacl_module.postMessage( "SetInterpolationStyle " + style );
-        nacl_module.postMessage( "GetData" );
-        } );
-    $("#clear").click( function() {
-        nacl_module.postMessage( "ClearAll" );
-        nacl_module.postMessage( "GetData" );
-        } );
+    function event_xy_in_container( evt, container )
+    {
+        // The advice to use offsetLeft/Top:
+        //     http://docs.jquery.com/Tutorials:Mouse_Position
+        // is wrong.
+        // Instead, using jQuery's offset() gives the desired result:
+        var x = evt.pageX - $(container).offset().left;
+        var y = evt.pageY - $(container).offset().top;
+        
+        return [ x, y ];
+    }
+    var move_handlers = function() {
+        var result = {};
+        
+        result.mousedown = function( evt )
+            {
+                var xy = event_xy_in_container( evt, this );
+                nacl_module.postMessage( "PickPoint " + xy[0] + " " + xy[1] );
+                need_redisplay();
+                
+                // Set up the move event handler:
+                $(this).mousemove( result.mousemove );
+                // Stop moving on mouseup (which must be on the window, not the element).
+                $(window).mouseup( result.mouseup );
+                
+                // NOTE: If we wanted to forward the event
+                //       to result.mousemove(), we would do it
+                //       using call() with the correct 'this' parameter.
+                // result.mousemove.call( this, evt );
+            };
+        
+        result.mousemove = function( evt )
+            {
+                var xy = event_xy_in_container( evt, this );
+                nacl_module.postMessage( "MovePoint " + xy[0] + " " + xy[1] );
+                need_redisplay();
+            };
+        
+        result.mouseup = function( evt )
+            {
+                // Stop moving on mouseup.
+                // NOTE: this is the window here, not #curve_canvas.
+                $('#curve_canvas').off( 'mousemove' );
+                $(window).off( 'mouseup' );
+            };
+        
+        return result;
+        }();
+    
+    var add_handlers = function() {
+        var result = {};
+        
+        result.mousedown = function( evt )
+            {
+                var xy = event_xy_in_container( evt, this );
+                nacl_module.postMessage( "AddPoint " + xy[0] + " " + xy[1] );
+                need_redisplay();
+            };
+        
+        return result;
+        }();
+    
+    function set_mouse_mode( mode )
+    {
+        // Disable the current event listeners.
+        $('#curve_canvas').off( 'mousedown' );
+        $('#curve_canvas').off( 'mousemove' );
+        $( window ).off( 'mouseup' );
+        
+        // Enable the correct mouse-down event listener.
+        if( 'move' == mode )
+        {
+            $("#curve_canvas").mousedown( move_handlers.mousedown );
+        }
+        else if( 'add' == mode )
+        {
+            $("#curve_canvas").mousedown( add_handlers.mousedown );
+        }
+        else
+        {
+            alert( "Unknown mouse mode: " + mode );
+        }
+    }
+    
+    
+    ///
+    /// Initialization code.
+    ///
+    // Load the native client module.
+    {
+        var nacl_holder = $("#nacl_holder");
+        nacl_holder.get(0).addEventListener( 'load', moduleDidLoad, true );
+        // This doesn't work for some reason:
+        // nacl_holder.load( function() { alert( "module loaded!" ); } );
+        // So I don't trust it for "message", either:
+        // nacl_holder.on( "message", function() { alert( "message!" ); } );
+        nacl_holder.get(0).addEventListener( 'message', handleMessage, true );
+        nacl_holder.append( '<embed name="nacl_module" id="nacl_module" width=40 height=40 src="Curve.nmf" type="application/x-nacl" />' );
+        
+        canvas = $("#curve_canvas").get(0);
+        ctx = $("#curve_canvas").get(0).getContext("2d");
+        
+        // The rest of the setup code, setup_callbacks() will be called by
+        // moduleDidLoad.
+    }
+    function moduleDidLoad()
+    {
+        // alert( "module loaded!" );
+        $("#nacl_status").html( '<p>Loaded.</p>' );
+        
+        // THIS CAUSES THE EMBED TO STOP WORKING:
+        // $("#nacl_holder embed").hide();
+        
+        nacl_module = $("#nacl_module").get(0);
+        
+        setup_callbacks();
+    }
+    function setup_callbacks()
+    {
+        $("#style").change( function() {
+            var style = $("#style option:selected").val();
+            nacl_module.postMessage( "SetInterpolationStyle " + style );
+            nacl_module.postMessage( "GetData" );
+            } );
+        // Call the style-changed function to set the module's set to
+        // what it is here in the HTML.
+        $("#style").change();
+        
+        $("#clear").click( function() {
+            nacl_module.postMessage( "ClearAll" );
+            nacl_module.postMessage( "GetData" );
+            } );
+        
+        $("input[name=mouse_mode]").change( function() {
+            set_mouse_mode( $("input[name=mouse_mode]:checked").val() );
+            } );
+        set_mouse_mode( $("input[name=mouse_mode]:checked").val() );
+    }
 } );
 </script>
 

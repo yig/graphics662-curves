@@ -8,6 +8,10 @@
 #define DIVISIONS 20
 #define GL_PI  3.1415926535f
 
+// Call these to raise a dialog box or log to the javascript console for debugging:
+extern void jsAlert( const char* msg );
+extern void jsLog( const char* msg );
+
 namespace MyCurve
 {
 
