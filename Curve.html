@@ -108,6 +108,10 @@ $(document).ready( function() {
     {
         ctx.arc( pt[0], pt[1], kPointRadius, 0, 2*Math.PI, false );
     }
+    function AddPoints( pt0, pt1 )
+    {
+        return [ pt0[0] + pt1[0], pt0[1] + pt1[1] ];
+    }
     function draw()
     {
         if( canvas === null || ctx === null ) return;
@@ -218,7 +222,7 @@ $(document).ready( function() {
                         ctx.beginPath();
                         for (var i = 0; i < interpPoints.length; i++)
                         {
-                            DrawCircle(interpPoints[i] + ctrlPoints[i]);
+                            DrawCircle(AddPoints(interpPoints[i], ctrlPoints[i]));
                         }
                         ctx.fill();
                     }else{
