@@ -37,8 +37,8 @@ CXXFLAGS:=-pthread -std=gnu++98 $(WARNINGS)
 # Compute tool paths
 #
 #
-OSNAME:=$(shell python $(NACL_SDK_ROOT)/tools/getos.py)
-TC_PATH:=$(abspath $(NACL_SDK_ROOT)/toolchain/$(OSNAME)_x86_newlib)
+OSNAME:=$(shell python "$(NACL_SDK_ROOT)"/tools/getos.py)
+TC_PATH:="$(NACL_SDK_ROOT)"/toolchain/$(OSNAME)_x86_newlib
 CXX:=$(TC_PATH)/bin/i686-nacl-g++
 
 #

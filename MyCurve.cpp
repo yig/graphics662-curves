@@ -53,7 +53,7 @@ void MyCurve::AddPoint(float x, float y)
 
 void MyCurve::PickPoint(float x, float y)
 {
-	float radius = 5.0;
+	float radius = 10.0;
 	picked = NULL;
 	Point tmp = Point(x, y);
 	if (dist(tmp, endPoints[0]) < radius){
