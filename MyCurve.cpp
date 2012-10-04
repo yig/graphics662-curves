@@ -284,50 +284,59 @@ void MyCurve::ControlPoints()
 		}
 		break;
 	case HERMITE:
-		//Additional constraints: second derivative are zero at end points
-		//first row	
-		A(0,0) = 2; A(0,1) = 1;
-		for (int i = 2; i < dim; i++){
-			A(0, i) = 0;
-		}
-
+	    // Zero A:
+	    for( int i = 0; i < dim; ++i )
+	    for( int j = 0; j < dim; ++j )
+	    {
+	        A(i,j) = 0;
+	    }
+	    
+	    // Based on showCtrl, determine the boundary slope either by endPoints or automatically
+		if( !showCtrl )
+		{
+            // Additional constraints: second derivative are zero at end points
+            // first row	
+            A(0,0) = 2;
+            A(0,1) = 1;
+            P(0,0) = 3 * (interpPoints[1].x - interpPoints[0].x);
+            P(0,1) = 3 * (interpPoints[1].y - interpPoints[0].y);
+            
+            // last row
+            A(dim-1, dim-2) = 1;
+            A(dim-1, dim-1) = 2;
+            P(dim-1,0) =  3 * (interpPoints[dim-1].x - interpPoints[dim-2].x);
+            P(dim-1,1) =  3 * (interpPoints[dim-1].y - interpPoints[dim-2].y);
+        }
+        else
+        {
+            // First derivatives are specified by endPoints.
+            A(0,0) = 1;
+            P(0,0) = endPoints[0].x - interpPoints[0].x;
+            P(0,1) = endPoints[0].y - interpPoints[0].y;
+            
+            A(dim-1,dim-1) = 1;
+            P(dim-1,0) = endPoints[1].x - interpPoints[totalPoints - 1].x;
+            P(dim-1,1) = endPoints[1].y - interpPoints[totalPoints - 1].y;
+        }
+		
 		//middle rows
 		for (int i = 1; i < dim - 1; i++)
 		{
-			for (int j = 0; j < dim; j++)
-				A(i,j) = 0;
 			A(i, i-1) = 1; A(i, i) = 4; A(i, i+1) = 1;
 		}
-
-		//last row
-		for (int i = 0; i < dim - 2; i++)
-			A(dim-1, i) = 0;
-		A(dim-1, dim-2) = 1; A(dim-1,dim-1) = 2;
-
-
-		P(0,0) = 3 * (interpPoints[1].x - interpPoints[0].x);
-		P(0,1) = 3 * (interpPoints[1].y - interpPoints[0].y);
 		for (int i = 1; i < dim - 1; i++)
 		{
 			P(i, 0) = 3 * (interpPoints[i+1].x - interpPoints[i-1].x);
 			P(i, 1) = 3 * (interpPoints[i+1].y - interpPoints[i-1].y);
 		}
-		P(dim-1,0) =  3 * (interpPoints[dim-1].x - interpPoints[dim-2].x);
-		P(dim-1,1) =  3 * (interpPoints[dim-1].y - interpPoints[dim-2].y);
-
-
+		
 		C = A.Solve(P);
 		for (int i = 0; i < totalPoints; i++){
 			ctrlPoints.push_back(Point(C(i,0), C(i,1)));
 		}
 
 		// Based on showCtrl, determine the boundary slope either by endPoints or automatically
-		if (showCtrl)
-		{
-			ctrlPoints[0] = endPoints[0] - interpPoints[0];
-			ctrlPoints[totalPoints - 1] = endPoints[1] - interpPoints[totalPoints - 1];
-		}		
-		else
+		if( !showCtrl )
 		{
 			endPoints[0] = interpPoints[0] + ctrlPoints[0];
 			endPoints[1] = interpPoints[totalPoints - 1] + ctrlPoints[totalPoints - 1];
