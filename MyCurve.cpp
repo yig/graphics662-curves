@@ -285,11 +285,7 @@ void MyCurve::ControlPoints()
 		break;
 	case HERMITE:
 	    // Zero A:
-	    for( int i = 0; i < dim; ++i )
-	    for( int j = 0; j < dim; ++j )
-	    {
-	        A(i,j) = 0;
-	    }
+	    A.Null();
 	    
 	    // Based on showCtrl, determine the boundary slope either by endPoints or automatically
 		if( !showCtrl )
