@@ -106,6 +106,7 @@ $(document).ready( function() {
     var kPointRadius = 5.;
     function DrawCircle( pt )
     {
+        ctx.moveTo( pt[0], pt[1] );
         ctx.arc( pt[0], pt[1], kPointRadius, 0, 2*Math.PI, false );
     }
     function AddPoints( pt0, pt1 )
