@@ -35,7 +35,7 @@ std::ostream& operator<<( std::ostream& out, const std::vector< MyCurve::Point >
     {
         if( i > 0 ) out << ", ";
         
-        out << "[ " << pts.at(i).x << ", " << pts.at(i).y << " ]";
+        out << "[ " << pts.at(i).x() << ", " << pts.at(i).y() << " ]";
     }
     out << " ]";
     
@@ -115,7 +115,7 @@ public:
         }
         else if( cmd == "GetData" )
         {
-            vector<MyCurve::Point> endPoints, interpPoints, ctrlPoints, curve;
+            std::vector<MyCurve::Point> endPoints, interpPoints, ctrlPoints, curve;
             
             m_myCurve.GetData( endPoints, interpPoints, ctrlPoints, curve );
             

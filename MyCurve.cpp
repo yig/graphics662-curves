@@ -3,8 +3,10 @@
 //////////////////////////////////////////////////////////////////////
 
 #include "MyCurve.h"
-#include "matrix.h"
-using math::matrix;
+#include <Eigen/Core>
+#include <Eigen/LU>
+using Eigen::MatrixXd;
+using std::vector;
 
 // Call these to raise a dialog box or log to the javascript console for debugging.
 // NOTE: You can pass either a const char* or an std::string.
@@ -41,10 +43,10 @@ void MyCurve::AddPoint(float x, float y)
 		//If there are more than 1 interpolation point, set up the 2 end points to help determine the curve.
 		//They lie on the tangent of the first and last interpolation points.
 		tmp = interpPoints[0] - interpPoints[1];
-		n = tmp.Norm();
+		n = tmp.norm();
 		endPoints[0] = interpPoints[0] + tmp / n * 50;
 		tmp = interpPoints[interpPoints.size()-1] - interpPoints[interpPoints.size()-2];
-		n = tmp.Norm();
+		n = tmp.norm();
 		endPoints[1] = interpPoints[interpPoints.size()-1] + tmp / n * 50;
 	}
 	
@@ -56,16 +58,16 @@ void MyCurve::PickPoint(float x, float y)
 	float radius = 10.0;
 	picked = NULL;
 	Point tmp = Point(x, y);
-	if (dist(tmp, endPoints[0]) < radius){
+	if ((tmp - endPoints[0]).norm() < radius){
 		picked = endPoints;
 		return;
 	}
-	if (dist(tmp, endPoints[1]) < radius){
+	if ((tmp - endPoints[1]).norm() < radius){
 		picked = endPoints+1;
 		return;
 	}
 	for (unsigned int i = 0; i < interpPoints.size(); i++){
-		if (dist(tmp, interpPoints[i]) < radius){
+		if ((tmp - interpPoints[i]).norm() < radius){
 			picked = &(interpPoints[i]);
 			return;
 		}
@@ -75,8 +77,8 @@ void MyCurve::PickPoint(float x, float y)
 void MyCurve::MovePicked(float x, float y)
 {
 	if (picked != NULL){
-		(*picked).x = x;
-		(*picked).y = y;
+		(*picked).x() = x;
+		(*picked).y() = y;
 		
 		Recalculate();
 	}
@@ -194,14 +196,14 @@ float MyCurve::computeDN(int n, int j, int t, int d)
 //       We have provided you with a data structure to store and solve the linear system.
 //       Below is an example code, read the understand it.
 //
-//	matrix<float> A(3,3);
-//  matrix<float> c(3,1);
-//  matrix<float> p(3,1);
+//	MatrixXd A(3,3);
+//  MatrixXd c(3,1);
+//  MatrixXd p(3,1);
 //  A(0,0) = 1.0; A(0,1) = 0.0; A(0,2) = 0.0;
 //  A(1,0) = 0.0; A(1,1) = 1.0; A(1,2) = 0.0;
 //  A(2,0) = 0.0; A(2,1) = 0.0; A(2,2) = 1.0;
 //  p(0,0) = 1.0; p(1,0) = 2.0; p(2,0) = 3.0;
-//  c = A.Solve(p);
+//  c = A.fullPivLu().solve(p);
 //
 //  The result in c is c(0,0) = 1.0; c(1,0) = 2.0; c(3,0) = 3.0, which satisfies Ac = p.
 
@@ -221,9 +223,9 @@ void MyCurve::ControlPoints()
 		dim = totalPoints + 2;
 	else
 		dim = totalPoints;
-	matrix<double> A(dim, dim);
-	matrix<double> C(dim, 2);
-	matrix<double> P(dim, 2);
+	MatrixXd A(dim, dim);
+	MatrixXd C(dim, 2);
+	MatrixXd P(dim, 2);
 
 	// Based on style use appropriate ways to compute control points
 	switch(style)
@@ -274,18 +276,18 @@ void MyCurve::ControlPoints()
 		A(dim - 1, dim - 1) = computeDN(3, dim - 1, dim - 3, 2);
 		P(0,0) = 0; P(0,1) = 0;
 		for (int i = 1; i < totalPoints + 1; i++){
-			P(i,0) = interpPoints[i-1].x;
-			P(i,1) = interpPoints[i-1].y;
+			P(i,0) = interpPoints[i-1].x();
+			P(i,1) = interpPoints[i-1].y();
 		}
 		P(dim-1,0) = 0; P(dim-1,1) = 0;
-		C = A.Solve(P);
+		C = A.fullPivLu().solve(P);
 		for (int i = 0; i < totalPoints + 2; i++){
 			ctrlPoints.push_back(Point(C(i,0), C(i,1)));
 		}
 		break;
 	case HERMITE:
 	    // Zero A:
-	    A.Null();
+	    A.setZero(dim, dim);
 	    
 	    // Based on showCtrl, determine the boundary slope either by endPoints or automatically
 		if( !showCtrl )
@@ -294,25 +296,21 @@ void MyCurve::ControlPoints()
             // first row	
             A(0,0) = 2;
             A(0,1) = 1;
-            P(0,0) = 3 * (interpPoints[1].x - interpPoints[0].x);
-            P(0,1) = 3 * (interpPoints[1].y - interpPoints[0].y);
+            P.row(0) = 3 * (interpPoints[1] - interpPoints[0]);
             
             // last row
             A(dim-1, dim-2) = 1;
             A(dim-1, dim-1) = 2;
-            P(dim-1,0) =  3 * (interpPoints[dim-1].x - interpPoints[dim-2].x);
-            P(dim-1,1) =  3 * (interpPoints[dim-1].y - interpPoints[dim-2].y);
+            P.row(dim-1) =  3 * (interpPoints[dim-1] - interpPoints[dim-2]);
         }
         else
         {
             // First derivatives are specified by endPoints.
             A(0,0) = 1;
-            P(0,0) = endPoints[0].x - interpPoints[0].x;
-            P(0,1) = endPoints[0].y - interpPoints[0].y;
+            P.row(0) = endPoints[0] - interpPoints[0];
             
             A(dim-1,dim-1) = 1;
-            P(dim-1,0) = endPoints[1].x - interpPoints[totalPoints - 1].x;
-            P(dim-1,1) = endPoints[1].y - interpPoints[totalPoints - 1].y;
+            P.row(dim-1) = endPoints[1] - interpPoints[totalPoints - 1];
         }
 		
 		//middle rows
@@ -322,11 +320,10 @@ void MyCurve::ControlPoints()
 		}
 		for (int i = 1; i < dim - 1; i++)
 		{
-			P(i, 0) = 3 * (interpPoints[i+1].x - interpPoints[i-1].x);
-			P(i, 1) = 3 * (interpPoints[i+1].y - interpPoints[i-1].y);
+			P.row(i) = 3 * (interpPoints[i+1] - interpPoints[i-1]);
 		}
 		
-		C = A.Solve(P);
+		C = A.fullPivLu().solve(P);
 		for (int i = 0; i < totalPoints; i++){
 			ctrlPoints.push_back(Point(C(i,0), C(i,1)));
 		}
