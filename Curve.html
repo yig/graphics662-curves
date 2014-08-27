@@ -20,6 +20,7 @@ body
 }
 
 /* http://stackoverflow.com/questions/7059039/how-to-prevent-accidental-select-drag-highlight-on-webpage-when-drawing-off-html */
+/* UPDATE: evt.preventDefault() in a mouse down callback actually works. */
 .canvasholder
 {
   -moz-user-select: none;
@@ -56,7 +57,7 @@ canvas
 <label for="show_control_points"><input type="checkbox" name="show_control_points" value="show_control_points" id="show_control_points">Show Control Points</label>
 </form>
 
-<canvas id="curve_canvas" width="500" height="500"></canvas>
+<canvas id="curve_canvas" width="700" height="700"></canvas>
 <p id="tooltip"></p>
 </div>
 
@@ -272,6 +273,9 @@ $(document).ready( function() {
         
         result.mousedown = function( evt )
             {
+                // A mouse down shouldn't bubble, so that dragging doesn't select text.
+                evt.preventDefault();
+                
                 var xy = event_xy_in_container( evt, this );
                 nacl_module.postMessage( "PickPoint " + xy[0] + " " + xy[1] );
                 need_redisplay();
@@ -310,6 +314,9 @@ $(document).ready( function() {
         
         result.mousedown = function( evt )
             {
+                // A mouse down shouldn't bubble, so that dragging doesn't select text.
+                evt.preventDefault();
+                
                 var xy = event_xy_in_container( evt, this );
                 nacl_module.postMessage( "AddPoint " + xy[0] + " " + xy[1] );
                 need_redisplay();
