@@ -353,7 +353,7 @@ $(document).ready( function() {
         // So I don't trust it for "message", either:
         // nacl_holder.on( "message", function() { alert( "message!" ); } );
         nacl_holder.get(0).addEventListener( 'message', handleMessage, true );
-        nacl_holder.append( '<embed name="nacl_module" id="nacl_module" width=40 height=40 src="Curve.nmf" type="application/x-nacl" />' );
+        nacl_holder.append( '<embed name="nacl_module" id="nacl_module" width=40 height=40 src="pnacl/Release/Curve.nmf" type="application/x-pnacl" />' );
         
         canvas = $("#curve_canvas").get(0);
         ctx = $("#curve_canvas").get(0).getContext("2d");
