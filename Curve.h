@@ -3,9 +3,6 @@
 
 #include "CurveFunctions.h"
 
-#include <vector>
-#include <Eigen/Core>
-
 namespace Curve
 {
 

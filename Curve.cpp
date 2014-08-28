@@ -1,17 +1,18 @@
 #include "Curve.h"
+using std::vector;
 
 #include <cassert>
 #include <cmath>
-
-#include <Eigen/Core>
-#include <Eigen/LU>
-using Eigen::MatrixXd;
-using std::vector;
 
 // Call these to raise a dialog box or log to the javascript console for debugging.
 // NOTE: You can pass either a const char* or an std::string.
 extern void jsAlert( const std::string& msg );
 extern void jsLog( const std::string& msg );
+
+namespace
+{
+    const int kSamplesPerCurve = 20;
+}
 
 namespace Curve
 {

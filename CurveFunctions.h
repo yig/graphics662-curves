@@ -14,11 +14,16 @@ typedef double real_t;
 //     on_curve ( off_curve off_curve on_curve )+
 // at positive integer 'samplesPerCurve' locations along each curve.
 // Returns the sampled points.
-std::vector< Point > EvaluateCubicBezierSplineBernstein( const std::vector< Point >& controlPoints, const int samplesPerCurve );
-std::vector< Point > EvaluateCubicBezierSplineMatrix( const std::vector< Point >& controlPoints, const int samplesPerCurve );
-std::vector< Point >  EvaluateCubicBezierSplineCasteljau( const std::vector< Point >& controlPoints, const int samplesPerCurve );
+enum EvaluateCubicBezierCurveApproach
+{
+    BernsteinApproach,
+    MatrixApproach,
+    CasteljauApproach
+}
+std::vector< Point > EvaluateCubicBezierSpline( const std::vector< Point >& controlPoints, const int samplesPerCurve, EvaluateCubicBezierCurveApproach approach );
 
 // Evaluate a cubic Bezier curve at location 't'.
+Point EvaluateCubicBezierCurve( const Point& p0, const Point& p1, const Point& p2, const Point& p3, const real_t t, EvaluateCubicBezierCurveApproach approach );
 Point EvaluateCubicBezierCurveBernstein( const Point& p0, const Point& p1, const Point& p2, const Point& p3, const real_t t );
 Point EvaluateCubicBezierCurveMatrix( const Point& p0, const Point& p1, const Point& p2, const Point& p3, const real_t t );
 Point EvaluateCubicBezierCurveCasteljau( const Point& p0, const Point& p1, const Point& p2, const Point& p3, const real_t t );

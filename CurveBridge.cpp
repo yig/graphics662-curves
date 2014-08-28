@@ -49,14 +49,14 @@ std::istream& operator>>( std::istream& in, MyCurve::Point& pt )
 class CurveInstance : public pp::Instance
 {
 public:
-    explicit CurveInstance( PP_Instance instance ) : pp::Instance( instance )
+    explicit CurveInstance( PP_Instance instance ) : pp::Instance( instance ), m_curve(0)
     {
         // For debugging:
         anyInstance = this;
     }
-    virtual ~CurveInstance() {}
+    virtual ~CurveInstance() { delete m_curve; }
     
-    virtual void HandleMessage( const pp::Var& var_message )
+    void HandleMessage( const pp::Var& var_message )
     {
         // This slows everything down, but is useful for debugging:
         jsLog( std::string( "log HandleMessage: " ) + var_message.AsString() );
@@ -75,61 +75,52 @@ public:
         
         if( cmd == "AddPoint" )
         {
-            MyCurve::Point p;
+            Curve::Point p;
             msgstream >> p;
-            m_myCurve.AddPoint( p );
+            if( m_curve ) m_curve->AddPoint( p );
         }
-        else if( cmd == "PickPoint" )
+        else if( cmd == "SetControlPoint" )
         {
-            float x, y;
-            msgstream >> x >> y;
-            m_myCurve.PickPoint( x, y );
-        }
-        else if( cmd == "MovePicked" )
-        {
-            float x, y;
-            msgstream >> x >> y;
-            m_myCurve.MovePicked( x, y );
+            int i;
+            Point p;
+            msgstream >> i >> p;
+            if( m_curve ) m_curve->SetControlPoint( i, p );
         }
         else if( cmd == "ClearAll" )
         {
-            m_myCurve.ClearAll();
+            CreateCurveClass();
         }
-        else if( cmd == "SetShowControlPoints" )
+        else if( cmd == "SetCurveType" )
         {
-            bool ctrlPoints;
-            msgstream >> std::boolalpha >> ctrlPoints;
+            msgstream >> m_curveType;
             
-            m_myCurve.SetShowControlPoints( ctrlPoints );
-        }
-        else if( cmd == "SetInterpolationStyle" )
+        void CreateCurveClass()
         {
-            std::string stylestr;
-            msgstream >> stylestr;
+            delete m_curve;
+            m_curve = 0;
             
-            MyCurve::MyCurve::InterpolationStyle style = MyCurve::MyCurve::INVALID_STYLE;
-            
-            if( stylestr == "BERNSTEIN" ) style = MyCurve::MyCurve::BERNSTEIN;
-            else if( stylestr == "CASTELJAU" ) style = MyCurve::MyCurve::CASTELJAU;
-            else if( stylestr == "MATRIX" ) style = MyCurve::MyCurve::MATRIX;
-            else if( stylestr == "BSPLINE" ) style = MyCurve::MyCurve::BSPLINE;
-            else if( stylestr == "HERMITE" ) style = MyCurve::MyCurve::HERMITE;
-            
-            m_myCurve.SetInterpolationStyle( style );
+            if( m_curveType == "CubicBezierBernstein" ) m_curve = new Curve::CubicBezierCurveBernstein();
+            else if( m_curveType == "CubicBezierCasteljau" ) m_curve = new Curve::CubicBezierCurveCasteljau();
+            else if( m_curveType == "CubicBezierMatrix" ) m_curve = new Curve::CubicBezierCurveMatrix();
+            else if( m_curveType == "CubicHermite" ) m_curve = new Curve::CubicHermiteCurve();
+            else if( m_curveType == "CatmullRom" ) m_curve = new Curve::CatmullRomCurve();
+            else if( m_curveType == "CubicBSpline" ) m_curve = new Curve::CubicBSplineCurve();
         }
         else if( cmd == "GetData" )
         {
-            std::vector<MyCurve::Point> endPoints, interpPoints, ctrlPoints, curve;
+            std::vector< Curve::Point > controlPoints, curvePoints;
             
-            m_myCurve.GetData( endPoints, interpPoints, ctrlPoints, curve );
+            if( m_curve )
+            {
+                controlPoints = m_curve->GetControlPoints();
+                curvePoints = m_curve->GetCurvePoints();
+            }
             
             // Package up some JSON and post it.
             std::ostringstream packet;
             // Set precision to 24 to preserve double-precision accuracy.
             packet << std::setprecision( 24 ) << std::boolalpha;
-            packet << "{ \"endPoints\": " << endPoints;
-            packet << ", \"interpPoints\": " << interpPoints;
-            packet << ", \"ctrlPoints\": " << ctrlPoints;
+            packet << "{ \"controlPoints\": " << controlPoints;
             packet << ", \"curve\": " << curve;
             packet << "}";
             
@@ -142,7 +133,8 @@ public:
     }
     
 private:
-    MyCurve::MyCurve m_myCurve;
+    std::string m_curveType;
+    Curve::InterpolatingCurve* m_curve;
 }; // ~CurveInstance
 
 class CurveModule : public pp::Module
