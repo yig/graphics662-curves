@@ -83,7 +83,7 @@ protected:
 };
 
 // A class implementing everything for Hermite curves with C2 continuity of the added points.
-class HermiteCurve : public Curve
+class CubicHermiteCurve : public Curve
 {
 protected:
     // When adding a point, add initial derivatives, too.
@@ -108,18 +108,15 @@ protected:
 };
 
 // A class implementing everything for BSpline curves that interpolate the added points.
-class BSplineCurve : public Curve
+class CubicBSplineCurve : public Curve
 {
 protected:
     // When adding a point, add initial derivatives, too.
     void doAddPoint( const Point& p );
     // Evaluated the given control points to fill m_curvePoints.
     void doEvaluate() const;
-    // Given a sequence of interpolated points, calculate 
-    void CalculateControlPointsFromInterpolatedPoints();
     
-    // TODO Q: Do I want this, or do I want to extract the previous
-    //         interpolated points from an on-the-fly evaluation of the curve?
+    // BSplines can't 
     std::vector< Point > m_interpolatedPoints;
 };
 

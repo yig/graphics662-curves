@@ -135,17 +135,23 @@ CubicBezierCurve::doSetControlPoint( int i, const Point& p )
 void CubicBezierCurveBernstein::doEvaluate() const
 {
     assert( m_curvePoints.empty() );
-    EvaluateCubicBezierSplineBernstein( m_controlPoints, kSamplesPerCurve, m_curvePoints );
+    // We can't evaluate if we don't have at least 4 points.
+    if( m_controlPoints.size() < 4 ) return;
+    m_curvePoints = EvaluateCubicBezierSplineBernstein( m_controlPoints, kSamplesPerCurve );
 }
 void CubicBezierCurveMatrix::doEvaluate() const
 {
     assert( m_curvePoints.empty() );
-    EvaluateCubicBezierSplineMatrix( m_controlPoints, kSamplesPerCurve, m_curvePoints );
+    // We can't evaluate if we don't have at least 4 points.
+    if( m_controlPoints.size() < 4 ) return;
+    m_curvePoints = EvaluateCubicBezierSplineMatrix( m_controlPoints, kSamplesPerCurve );
 }
 void CubicBezierCurveCasteljau::doEvaluate() const
 {
     assert( m_curvePoints.empty() );
-    EvaluateCubicBezierSplineCasteljau( m_controlPoints, kSamplesPerCurve, m_curvePoints );
+    // We can't evaluate if we don't have at least 4 points.
+    if( m_controlPoints.size() < 4 ) return;
+    m_curvePoints = EvaluateCubicBezierSplineCasteljau( m_controlPoints, kSamplesPerCurve );
 }
 
 /// ======================================================================================
@@ -183,43 +189,65 @@ CubicHermiteCurve::doEvaluate()
 const
 {
     assert( m_curvePoints.empty() );
-    EvaluateCubicHermiteSpline( m_controlPoints, kSamplesPerCurve, m_curvePoints );
+    // We can't evaluate if we don't have at least 4 points.
+    if( m_controlPoints.size() < 4 ) return;
+    m_curvePoints = EvaluateCubicHermiteSpline( m_controlPoints, kSamplesPerCurve );
 }
 
 /// ======================================================================================
 
 // Add a point.
 void
-CubicCatmullRomCurve::doAddPoint( const Point& p )
+CatmullRomCurve::doAddPoint( const Point& p )
 {
     m_controlPoints.push_back( p );
 }
 
 // Evaluated the given control points to fill m_curvePoints.
 void
-CubicCatmullRomCurve::doEvaluate()
+CatmullRomCurve::doEvaluate()
 const
 {
     assert( m_curvePoints.empty() );
-    EvaluateCatmullRomSpline( m_controlPoints, kSamplesPerCurve, m_curvePoints );
+    // We can't evaluate if we don't have at least 4 points.
+    if( m_controlPoints.size() < 4 ) return;
+    m_curvePoints = EvaluateCatmullRomSpline( m_controlPoints, kSamplesPerCurve );
 }
 
 /// ======================================================================================
 
 // Add a point.
 void
-CubicCatmullRomCurve::doAddPoint( const Point& p )
+CubicBSplineCurve::doAddPoint( const Point& p )
 {
-    m_controlPoints.push_back( p );
+    if( m_controlPoints.empty() ) m_controlPoints.push_back( p );
+    else if( m_controlPoints.size() == 1 )
+    {
+        std::vector< Point > interpPoints( m_controlPoints );
+        interpPoints.push_back( p );
+        m_controlPoints.clear();
+        
+        // Compute the BSpline interpolating the points.
+        m_controlPoints = ComputeBSplineFromInterpolatingPoints( interpPoints );
+    }
+    else
+    {
+        // Figure out the interpolating points created from the BSpline.
+        std::vector< Point > interpPoints = ComputeInterpolatingPointsFromBSpline( m_controlPoints );
+        // Add the new one to the end.
+        interpPoints.push_back( p );
+        // Compute the BSpline interpolating the points.
+        m_controlPoints = ComputeBSplineFromInterpolatingPoints( interpPoints );
+    }
 }
 
 // Evaluated the given control points to fill m_curvePoints.
 void
-CubicCatmullRomCurve::doEvaluate()
+CubicBSplineCurve::doEvaluate()
 const
 {
     assert( m_curvePoints.empty() );
-    EvaluateCatmullRomSpline( m_controlPoints, kSamplesPerCurve, m_curvePoints );
+    m_curvePoints = EvaluateBSpline( m_controlPoints, kSamplesPerCurve );
 }
 
 }
