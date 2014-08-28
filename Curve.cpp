@@ -314,6 +314,7 @@ CubicBSplineCurve::doEvaluate()
 const
 {
     assert( m_curvePoints.empty() );
+    if( m_controlPoints.size() < 4 ) return;
     m_curvePoints = EvaluateCubicBSpline( m_controlPoints, kSamplesPerCurve );
 }
 

@@ -120,7 +120,7 @@ $(document).ready( function() {
         
         ctx.clearRect( 0, 0, canvas.width, canvas.height );
         
-        if( curveData == null ) return;
+        if( curveData === null ) return;
         
         var kBackgroundColor = 'rgb( 0,0,0 )';
         var kInterpPointColor = 'rgb( 0,0,255 )';
@@ -140,6 +140,8 @@ $(document).ready( function() {
         var curve = curveData.curve;
         
         // Draw the curve.
+        // It takes two points to make a line.
+        if( curve.length >= 2 )
         {
             ctx.lineWidth = kCurveWidth;
             ctx.strokeStyle = kCurveColor;
@@ -154,7 +156,7 @@ $(document).ready( function() {
         // Draw the control points
         var showControlPoints = $("#show_control_points").is(':checked');
         var curveType = $("#curveType option:selected").val();
-        if( showControlPoints )
+        if( showControlPoints && controlPoints.length > 0 )
         {
             ctx.lineWidth = kControlPointLineWidth;
             ctx.fillStyle = kControlPointColor;
@@ -313,6 +315,15 @@ $(document).ready( function() {
                 evt.preventDefault();
                 
                 var xy = event_xy_in_container( evt, this );
+                // Too often I forget to switch to move mode and I create
+                // a second control point in the same place.
+                // Ignore clicks on picked points.
+                if( PickControlPoint( xy ) !== null )
+                {
+                    console.log( "Not adding a point on top of an existing control point; create it to the side and move it if you really mean it." );
+                    return;
+                }
+                
                 nacl_module.postMessage( "AddPoint " + xy[0] + " " + xy[1] );
                 need_redisplay();
             };
@@ -347,7 +358,7 @@ $(document).ready( function() {
         if( curveData === null ) return null;
         
         // Pick within this factor of the radius.
-        var kTolerance = 1.;
+        var kTolerance = 2.;
         
         for( var i = 0; i < curveData.controlPoints.length; ++i )
         {

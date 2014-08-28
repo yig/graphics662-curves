@@ -252,7 +252,15 @@ std::vector< Point > EvaluateCatmullRomSpline( const std::vector< Point >& contr
     assert( samplesPerCurve > 0 );
     
     // ADD YOUR CODE HERE
-    const std::vector< Point >& C = controlPoints;
+    std::vector< Point > C;
+    // p0 p0 p1 p2 ... pN pN
+    C.push_back( controlPoints.front() );
+    C.insert( C.end(), controlPoints.begin(), controlPoints.end() );
+    C.push_back( controlPoints.back() );
+    // Now reflect the first and last points.
+    C[0] = C[1] + (C[1] - C[2]);
+    C[C.size()-1] = C[C.size()-2] + (C[C.size()-2] - C[C.size()-3]);
+    
     std::vector< Point > result;
     // Reserve some space.
     result.reserve( samplesPerCurve*(C.size()-1)/3 + 1 );
@@ -266,7 +274,7 @@ std::vector< Point > EvaluateCatmullRomSpline( const std::vector< Point >& contr
         }
     }
     // Catmull-Rom splines interpolate, so the last point is the last control point.
-    result.push_back( C.back() );
+    result.push_back( controlPoints.back() );
     return result;
 }
 // Evaluate a cubic Catmull-Rom Spline curve at location 't'.
