@@ -41,6 +41,10 @@ std::ostream& operator<<( std::ostream& out, const std::vector< MyCurve::Point >
     
     return out;
 }
+std::istream& operator>>( std::istream& in, MyCurve::Point& pt )
+{
+    return in >> pt.x() >> pt.y();
+}
 
 class CurveInstance : public pp::Instance
 {
@@ -71,9 +75,9 @@ public:
         
         if( cmd == "AddPoint" )
         {
-            float x, y;
-            msgstream >> x >> y;
-            m_myCurve.AddPoint( x, y );
+            MyCurve::Point p;
+            msgstream >> p;
+            m_myCurve.AddPoint( p );
         }
         else if( cmd == "PickPoint" )
         {

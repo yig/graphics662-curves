@@ -34,16 +34,14 @@ MyCurve::~MyCurve()
 
 }
 
-void MyCurve::AddPoint(float x, float y)
+void MyCurve::AddPoint( const Point& p )
 {
-	Point tmp(x, y);
-	interpPoints.push_back(tmp);
-	float n;
+	interpPoints.push_back(p);
 	if (interpPoints.size() >= 2){
 		//If there are more than 1 interpolation point, set up the 2 end points to help determine the curve.
 		//They lie on the tangent of the first and last interpolation points.
-		tmp = interpPoints[0] - interpPoints[1];
-		n = tmp.norm();
+		Point tmp = interpPoints[0] - interpPoints[1];
+		float n = tmp.norm();
 		endPoints[0] = interpPoints[0] + tmp / n * 50;
 		tmp = interpPoints[interpPoints.size()-1] - interpPoints[interpPoints.size()-2];
 		n = tmp.norm();

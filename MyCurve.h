@@ -34,7 +34,7 @@ public:
 // Member functions
 
 	//Add a data point, also set up the two end points if there are more than 1 point.
-	void AddPoint(float x, float y);
+	void AddPoint( const Point& p );
 	//Pick a interpolation point on the screen.
 	void PickPoint(float x, float y);
 	//Move the picked interpolation point to mouse position.
