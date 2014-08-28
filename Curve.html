@@ -9,8 +9,7 @@
     Curve
     </title>
     
-    <!-- <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script> -->
-    <script src="js/jquery-1.7.1.min.js" type="text/javascript"></script>
+    <script src="js/jquery-2.1.1.min.js" type="text/javascript"></script>
     <script src="js/jquery.ba-throttle-debounce.min.js" type="text/javascript"></script>
 
 <style type="text/css">
@@ -55,7 +54,7 @@ canvas
 <option value="CatmullRom">CatmullRom</option>
 <option value="CubicBSpline">CubicBSpline</option>
 </select>
-<label for="show_control_points"><input type="checkbox" name="show_control_points" value="show_control_points" id="show_control_points">Show Control Points</label>
+<label for="show_control_points"><input type="checkbox" name="show_control_points" value="show_control_points" id="show_control_points" checked>Show Control Points</label>
 </form>
 
 <canvas id="curve_canvas" width="700" height="700"></canvas>
@@ -137,7 +136,7 @@ $(document).ready( function() {
         ctx.fillRect( 0, 0, canvas.width, canvas.height );
         */
         
-        var ctrlPoints = curveData.ctrlPoints;
+        var controlPoints = curveData.controlPoints;
         var curve = curveData.curve;
         
         // Draw the curve.
@@ -235,7 +234,7 @@ $(document).ready( function() {
                 
                 ctx.fillStyle = kInterpPointColor;
                 ctx.beginPath();
-                for( var i = 1; i < controlPoints.length; ++i )
+                for( var i = 0; i < controlPoints.length; ++i )
                 {
                     if( i % 3 !== 0 ) continue;
                     DrawCircle( controlPoints[i] );
@@ -263,13 +262,14 @@ $(document).ready( function() {
     var move_handlers = function() {
         var result = {};
         
+        var picked = null;
         result.mousedown = function( evt )
             {
                 // A mouse down shouldn't bubble, so that dragging doesn't select text.
                 evt.preventDefault();
                 
                 var xy = event_xy_in_container( evt, this );
-                nacl_module.postMessage( "PickPoint " + xy[0] + " " + xy[1] );
+                picked = PickControlPoint( xy );
                 need_redisplay();
                 
                 // Set up the move event handler:
@@ -286,8 +286,11 @@ $(document).ready( function() {
         result.mousemove = function( evt )
             {
                 var xy = event_xy_in_container( evt, this );
-                nacl_module.postMessage( "MovePicked " + xy[0] + " " + xy[1] );
-                need_redisplay();
+                if( picked !== null )
+                {
+                    nacl_module.postMessage( "SetControlPoint " + picked + " " + xy[0] + " " + xy[1] );
+                    need_redisplay();
+                }
             };
         
         result.mouseup = function( evt )
@@ -339,6 +342,27 @@ $(document).ready( function() {
         }
     }
     
+    function PickControlPoint( xy )
+    {
+        if( curveData === null ) return null;
+        
+        // Pick within this factor of the radius.
+        var kTolerance = 1.;
+        
+        for( var i = 0; i < curveData.controlPoints.length; ++i )
+        {
+            var dx = curveData.controlPoints[i][0] - xy[0];
+            var dy = curveData.controlPoints[i][1] - xy[1];
+            
+            if( dx*dx + dy*dy < kTolerance*kPointRadius*kPointRadius*kTolerance )
+            {
+                return i;
+            }
+        }
+        
+        // Return null for no pick.
+        return null;
+    }
     
     ///
     /// Initialization code.
@@ -374,19 +398,18 @@ $(document).ready( function() {
     }
     function setup_callbacks()
     {
-        $("#style").change( function() {
-            var style = $("#style option:selected").val();
-            nacl_module.postMessage( "SetInterpolationStyle " + style );
+        $("#curveType").change( function() {
+            var style = $("#curveType option:selected").val();
+            nacl_module.postMessage( "SetCurveType " + style );
             nacl_module.postMessage( "GetData" );
             } );
         // Call the style-changed function to set the module's style to
         // what it is here in the HTML.
-        $("#style").change();
+        $("#curveType").change();
         
         $("#show_control_points").change( function() {
             var show_control_points = $("#show_control_points").is(':checked');
-            nacl_module.postMessage( "SetShowControlPoints " + ( show_control_points ? "true" : "false" ) );
-            nacl_module.postMessage( "GetData" );
+            need_redisplay();
             } );
         // Call the changed function to set the module's value to
         // what it is here in the HTML.

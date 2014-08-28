@@ -13,7 +13,7 @@ class InterpolatingCurve
 {
 public:
     InterpolatingCurve() {}
-    virtual ~Curve() {}
+    virtual ~InterpolatingCurve() {}
     
     // Add another point to the sequence of input points.
     void AddPoint( const Point& p );
@@ -34,7 +34,7 @@ protected:
     virtual void doAddPoint( const Point& p ) = 0;
     
     // Evaluated the given control points to fill m_curvePoints.
-    virtual void doEvaluate() = 0;
+    virtual void doEvaluate() const = 0;
     
     // Set the given control point. Update the others if needed.
     virtual void doSetControlPoint( int i, const Point& p )
@@ -43,6 +43,8 @@ protected:
     }
     
     std::vector< Point > m_controlPoints;
+    // This is mutable because it is a cache and is created as-needed
+    // by GetCurvePoints().
     mutable std::vector< Point > m_curvePoints;
 
 private:
@@ -52,6 +54,9 @@ private:
 // A class implementing everything for Bezier curves except Evaluate();
 class CubicBezierCurve : public InterpolatingCurve
 {
+public:
+    CubicBezierCurve( EvaluateCubicBezierCurveApproach approach ) : m_approach( approach ) {}
+    
 protected:
     // When adding a point, add new non-interpolated control points.
     void doAddPoint( const Point& p );
@@ -59,28 +64,14 @@ protected:
     // when a non-interpolated control point is moved.
     void doSetControlPoint( int i, const Point& p );
     // We have three strategies for evaluating a Bezier curve.
-    virtual void doEvaluate() const = 0;
-};
+    virtual void doEvaluate() const;
 
-// Classes implementing three different approaches to evaluation.
-class CubicBezierCurveBernstein : public CubicBezierCurve
-{
-protected:
-    void doEvaluate() const;
-};
-class CubicBezierCurveMatrix : public BezierCurve
-{
-protected:
-    void doEvaluate() const;
-};
-class CubicBezierCurveCasteljau : public BezierCurve
-{
-protected:
-    void doEvaluate() const;
+private:
+    EvaluateCubicBezierCurveApproach m_approach;
 };
 
 // A class implementing everything for Hermite curves with C2 continuity of the added points.
-class CubicHermiteCurve : public Curve
+class CubicHermiteCurve : public InterpolatingCurve
 {
 protected:
     // When adding a point, add initial derivatives, too.
@@ -92,7 +83,7 @@ protected:
 };
 
 // A class implementing Catmull-Rom splines.
-class CatmullRomCurve : public Curve
+class CatmullRomCurve : public InterpolatingCurve
 {
 public:
     CatmullRomCurve( real_t alpha ) : m_alpha( alpha ) {}
@@ -102,19 +93,21 @@ protected:
     void doAddPoint( const Point& p );
     // Evaluated the given control points to fill m_curvePoints.
     void doEvaluate() const;
+
+private:
+    real_t m_alpha;
 };
 
 // A class implementing everything for BSpline curves that interpolate the added points.
-class CubicBSplineCurve : public Curve
+class CubicBSplineCurve : public InterpolatingCurve
 {
 protected:
     // When adding a point, add initial derivatives, too.
     void doAddPoint( const Point& p );
     // Evaluated the given control points to fill m_curvePoints.
     void doEvaluate() const;
-    
-    // BSplines can't 
-    std::vector< Point > m_interpolatedPoints;
 };
+
+}
 
 #endif /* __Curve_h__ */

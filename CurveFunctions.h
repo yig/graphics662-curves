@@ -10,6 +10,7 @@ namespace Curve
 typedef Eigen::Vector2d Point;
 typedef double real_t;
 
+
 // Evaluate a cubic Bezier spline with control points 'controlPoints' arranged
 //     on_curve ( off_curve off_curve on_curve )+
 // at positive integer 'samplesPerCurve' locations along each curve.
@@ -19,7 +20,7 @@ enum EvaluateCubicBezierCurveApproach
     BernsteinApproach,
     MatrixApproach,
     CasteljauApproach
-}
+};
 std::vector< Point > EvaluateCubicBezierSpline( const std::vector< Point >& controlPoints, const int samplesPerCurve, EvaluateCubicBezierCurveApproach approach );
 
 // Evaluate a cubic Bezier curve at location 't'.
@@ -27,6 +28,7 @@ Point EvaluateCubicBezierCurve( const Point& p0, const Point& p1, const Point& p
 Point EvaluateCubicBezierCurveBernstein( const Point& p0, const Point& p1, const Point& p2, const Point& p3, const real_t t );
 Point EvaluateCubicBezierCurveMatrix( const Point& p0, const Point& p1, const Point& p2, const Point& p3, const real_t t );
 Point EvaluateCubicBezierCurveCasteljau( const Point& p0, const Point& p1, const Point& p2, const Point& p3, const real_t t );
+
 
 // Evaluate a cubic Hermite spline with control points 'controlPoints' arranged:
 //     p0 derivative_at_p0 ( p1 derivative_at_p1 )+
@@ -42,6 +44,15 @@ Point EvaluateCubicHermiteCurve( const Point& p0, const Point& dp0, const Point&
 // Hermite spline.
 // NOTE: 'controlPoints' is an input and output parameter. The derivative entries are replaced.
 void CalculateHermiteSplineDerivativesForC2Continuity( std::vector< Point >& controlPoints );
+
+
+// Evaluate a Catmull-Rom Spline with control points 'controlPoints' arranged:
+//     p0 p1 p2 ( p3 )+
+// at positive integer 'samplesPerCurve' locations along each curve.
+// Upon return, 'curvePointsOut' is cleared and replaced with the sampled points.
+std::vector< Point > EvaluateCatmullRomSpline( const std::vector< Point >& controlPoints, const int samplesPerCurve, const real_t alpha );
+// Evaluate a cubic Catmull-Rom Spline curve at location 't'.
+Point EvaluateCatmullRomCurve( const Point& p0, const Point& p1, const Point& p2, const Point& p3, const real_t t, const real_t alpha );
 
 
 // Evaluate a cubic B-Spline with control points 'controlPoints' arranged:

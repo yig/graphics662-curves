@@ -1,6 +1,10 @@
 #include "CurveFunctions.h"
 using std::vector;
 
+#include <Eigen/LU>
+using Eigen::MatrixXd;
+using Eigen::Matrix4d;
+
 #include <cassert>
 #include <cmath>
 
@@ -68,9 +72,9 @@ Point EvaluateCubicBezierCurveMatrix( const Point& p0, const Point& p1, const Po
 		    + ( 3*p0 - 6*p1 + 3*p2)*t*t
 		    + (-3*p0 + 3*p1)*t
 		    + 1.0*p0;
-	*/
 	
 	return p;
+	*/
 }
 Point EvaluateCubicBezierCurveCasteljau( const Point& p0, const Point& p1, const Point& p2, const Point& p3, const real_t t )
 {
@@ -105,12 +109,15 @@ std::vector< Point > EvaluateCubicBezierSpline( const std::vector< Point >& cont
         for( int ti = 0; ti < samplesPerCurve; ++ti )
         {
             const real_t t = float(ti)/samplesPerCurve;
-            result.push_back( EvaluateCubicBezierCurve( p0, p0+1, p0+2, p0+3, t, approach ) );
+            result.push_back( EvaluateCubicBezierCurve( *p0, *(p0+1), *(p0+2), *(p0+3), t, approach ) );
         }
     }
+    // Bezier splines interpolate, so the last point is the last control point.
     result.push_back( controlPoints.back() );
     return result;
 }
+
+/// ======================================================================================
 
 // Evaluate a cubic Hermite curve at location 't'.
 Point EvaluateCubicHermiteCurve( const Point& p0, const Point& dp0, const Point& p1, const Point& dp1, const real_t t )
@@ -143,10 +150,11 @@ std::vector< Point > EvaluateCubicHermiteSpline( const std::vector< Point >& con
         for( int ti = 0; ti < samplesPerCurve; ++ti )
         {
             const real_t t = float(ti)/samplesPerCurve;
-            result.push_back( EvaluateCubicHermiteCurve( p0, p0+1, p0+2, p0+3, t ) );
+            result.push_back( EvaluateCubicHermiteCurve( *p0, *(p0+1), *(p0+2), *(p0+3), t ) );
         }
     }
-    result.push_back( controlPoints.back() );
+    // Hermite splines interpolate, so the last point is the last interpolated control point.
+    result.push_back( *(controlPoints.rbegin()+1) );
     return result;
 }
 
@@ -226,14 +234,134 @@ void CalculateHermiteSplineDerivativesForC2Continuity( std::vector< Point >& con
     }
 }
 
+/// ======================================================================================
+
+// Evaluate a Catmull-Rom Spline with control points 'controlPoints' arranged:
+//     p0 p1 p2 ( p3 )+
+// at positive integer 'samplesPerCurve' locations along each curve.
+// Upon return, 'curvePointsOut' is cleared and replaced with the sampled points.
+std::vector< Point > EvaluateCatmullRomSpline( const std::vector< Point >& controlPoints, const int samplesPerCurve, const real_t alpha )
+{
+    assert( controlPoints.size() >= 4 );
+    assert( samplesPerCurve > 0 );
+    
+    // ADD YOUR CODE HERE
+    std::vector< Point > result;
+    // Reserve some space.
+    result.reserve( samplesPerCurve*(controlPoints.size()-1)/3 + 1 );
+    // Evaluate each curve.
+    for( int i = 0; i+3 < controlPoints.size(); ++i )
+    {
+        const Point* p0 = &controlPoints.at(i);
+        for( int ti = 0; ti < samplesPerCurve; ++ti )
+        {
+            const real_t t = float(ti)/samplesPerCurve;
+            result.push_back( EvaluateCatmullRomCurve( *p0, *(p0+1), *(p0+2), *(p0+3), t, alpha ) );
+        }
+    }
+    // Catmull-Rom splines interpolate, so the last point is the last control point.
+    result.push_back( controlPoints.back() );
+    return result;
+}
+// Evaluate a cubic Catmull-Rom Spline curve at location 't'.
+Point EvaluateCatmullRomCurve( const Point& p0, const Point& p1, const Point& p2, const Point& p3, const real_t t, const real_t alpha )
+{
+    // ADD YOUR CODE HERE
+    const real_t d1 = (p1-p0).norm();
+    const real_t d2 = (p2-p1).norm();
+    const real_t d3 = (p3-p2).norm();
+    
+    const real_t d1a = pow( d1, alpha );
+    const real_t d2a = pow( d2, alpha );
+    const real_t d3a = pow( d3, alpha );
+    
+    // Convert to a Bezier curve according to
+    // "On the Parameterization of Catmull-Rom Curves" by Yuksel et al. 2009.
+    const Point b0 = p1;
+    const Point b1 = ( d1a*d1a*p2 - d2a*d2a*p0 + ( 2*d1a*d1a + 3*d1a*d2a + d2a*d2a )*p1 )/( 3*d1a*( d1a + d2a ) );
+    const Point b2 = ( d3a*d3a*p1 - d2a*d2a*p3 + ( 2*d3a*d3a + 3*d3a*d2a + d2a*d2a )*p2 )/( 3*d3a*( d3a + d2a ) );
+    const Point b3 = p2;
+    
+    return EvaluateCubicBezierCurveBernstein( b0, b1, b2, b3, t );
+}
+
+/// ======================================================================================
+
+// B-Spline helper functions
+namespace
+{
+// ADD YOUR CODE HERE
+real_t computeN( const std::vector< real_t >& L, int n, int j, real_t t )
+{
+	if (t < L[j] || t >= L[j+1+n])
+		return 0.0;
+	if (n == 0){
+		if (t >= L[j] && t < L[j+1])
+			return 1.0;
+		else
+			return 0.0;
+	}
+	else{
+		real_t v1 = (t - L[j]) / (L[j + n] - L[j]) * computeN(L, n-1, j, t);
+		real_t v2 = (L[j+n+1] - t) / (L[j + n + 1] - L[j +1]) * computeN(L, n-1, j+1, t);
+		return v1 + v2;
+	}
+}
+
+
+real_t computeDN( const std::vector< real_t >& L, int n, int j, int t, int d )
+{
+	if (d == 0){
+		return computeN(L, n,j,t);
+	}else{
+		real_t v1 = 1 / (L[j+n] - L[j]) * computeDN(L, n-1, j, t, d-1);
+		real_t v2 = 1 / (L[j+n+1] - L[j+1]) * computeDN(L, n-1, j+1, t, d-1);
+		return n * (v1 - v2);
+	}
+}
+}
 
 // Evaluate a cubic B-Spline with control points 'controlPoints' arranged:
 //     p0 p1 p2 ( p3 )+
 // at positive integer 'samplesPerCurve' locations along each curve.
 // Upon return, 'curvePointsOut' is cleared and replaced with the sampled points.
-std::vector< Point > EvaluateCubicBSpline( const std::vector< Point >& controlPoints, const int samplesPerCurve );
+std::vector< Point > EvaluateCubicBSpline( const std::vector< Point >& controlPoints, const int samplesPerCurve )
+{
+    assert( controlPoints.size() >= 4 );
+    assert( samplesPerCurve > 0 );
+    
+    // ADD YOUR CODE HERE
+    std::vector< Point > result;
+    // Reserve some space.
+    result.reserve( samplesPerCurve*(controlPoints.size()-1)/3 + 1 );
+    // Evaluate each curve.
+    for( int i = 0; i+3 < controlPoints.size(); ++i )
+    {
+        const Point* p0 = &controlPoints.at(i);
+        for( int ti = 0; ti < samplesPerCurve; ++ti )
+        {
+            const real_t t = float(ti)/samplesPerCurve;
+            result.push_back( EvaluateCubicBSplineCurve( *p0, *(p0+1), *(p0+2), *(p0+3), t ) );
+        }
+    }
+    
+    // The last point.
+    const Point* p0 = &controlPoints.at( controlPoints.size()-4 );
+    result.push_back( EvaluateCubicBSplineCurve( *p0, *(p0+1), *(p0+2), *(p0+3), 1. ) );
+    
+    return result;
+}
 // Evaluate a cubic B-Spline curve at location 't'.
-Point EvaluateCubicBSplineCurve( const Point& p0, const Point& p1, const Point& p2, const Point& p3, const real_t t );
+Point EvaluateCubicBSplineCurve( const Point& p0, const Point& p1, const Point& p2, const Point& p3, const real_t t )
+{
+    // ADD YOUR CODE HERE
+    return (1./6.)*(
+        p0*( 1 - 3*t + 3*t*t - t*t*t ) +
+        p1*( 4 - 6*t*t + 3*t*t*t ) +
+        p2*( 1 + 3*t + 3*t*t - 3*t*t*t ) +
+        p3*( t*t*t )
+        );
+}
 
 // Compute cubic BSpline control points that interpolate the given points.
 std::vector< Point > ComputeBSplineFromInterpolatingPoints( const std::vector< Point >& interpPoints )
@@ -245,8 +373,7 @@ std::vector< Point > ComputeBSplineFromInterpolatingPoints( const std::vector< P
     int totalPoints = interpPoints.size();
     
 	// Prepare data
-	if (totalPoints < 2)
-		return result;
+	if (totalPoints < 2) return result;
 	int degree = 3;
 	int dim = totalPoints + 2;
 	MatrixXd A(dim, dim);
@@ -254,9 +381,9 @@ std::vector< Point > ComputeBSplineFromInterpolatingPoints( const std::vector< P
 	MatrixXd P(dim, 2);
     
     // Compute coefficients
-    std::vector<float> L;
+    std::vector< real_t > L;
     for (int i = 0; i < totalPoints + degree * 2; i++){
-        L.push_back(float(i - degree));	
+        L.push_back(i - degree);
     }
     for (int i = 0; i < dim; i++){
         for (int j = 0; j < dim; j++){
@@ -265,21 +392,21 @@ std::vector< Point > ComputeBSplineFromInterpolatingPoints( const std::vector< P
     }
 
     // These computeDN and computeN are recursive functions
-    A(0,0) = computeDN(3,0,0,2); A(0,1) = computeDN(3,1,0,2); A(0,2) = computeDN(3,2,0,2); A(0,3) = computeDN(3,3,0,2);
+    A(0,0) = computeDN(L,3,0,0,2); A(0,1) = computeDN(L,3,1,0,2); A(0,2) = computeDN(L,3,2,0,2); A(0,3) = computeDN(L,3,3,0,2);
     for (int i = 1; i < dim - 2; i++){
-        A(i,i-1) = computeN(3, i - 1, i - 1); 
-        A(i, i) = computeN(3, i, i - 1);
-        A(i, i+1) = computeN(3, i + 1, i - 1);
-        A(i, i+2) = computeN(3, i + 2, i - 1);
+        A(i,i-1) = computeN(L, 3, i - 1, i - 1); 
+        A(i, i) = computeN(L, 3, i, i - 1);
+        A(i, i+1) = computeN(L, 3, i + 1, i - 1);
+        A(i, i+2) = computeN(L, 3, i + 2, i - 1);
     }
-    A(dim - 2, dim - 4) = computeN(3, dim - 4, dim - 3);
-    A(dim - 2, dim - 3) = computeN(3, dim - 3, dim - 3);
-    A(dim - 2, dim - 2) = computeN(3, dim - 2, dim - 3);
-    A(dim - 2, dim - 1) = computeN(3, dim - 1, dim - 3);
-    A(dim - 1, dim - 4) = computeDN(3, dim - 4, dim - 3, 2); 
-    A(dim - 1, dim - 3) = computeDN(3, dim - 3, dim - 3, 2);
-    A(dim - 1, dim - 2) = computeDN(3, dim - 2, dim - 3, 2); 
-    A(dim - 1, dim - 1) = computeDN(3, dim - 1, dim - 3, 2);
+    A(dim - 2, dim - 4) = computeN(L, 3, dim - 4, dim - 3);
+    A(dim - 2, dim - 3) = computeN(L, 3, dim - 3, dim - 3);
+    A(dim - 2, dim - 2) = computeN(L, 3, dim - 2, dim - 3);
+    A(dim - 2, dim - 1) = computeN(L, 3, dim - 1, dim - 3);
+    A(dim - 1, dim - 4) = computeDN(L, 3, dim - 4, dim - 3, 2); 
+    A(dim - 1, dim - 3) = computeDN(L, 3, dim - 3, dim - 3, 2);
+    A(dim - 1, dim - 2) = computeDN(L, 3, dim - 2, dim - 3, 2); 
+    A(dim - 1, dim - 1) = computeDN(L, 3, dim - 1, dim - 3, 2);
     P(0,0) = 0; P(0,1) = 0;
     for (int i = 1; i < totalPoints + 1; i++){
         P(i,0) = interpPoints[i-1].x();
@@ -304,12 +431,16 @@ std::vector< Point > ComputeInterpolatingPointsFromBSpline( const std::vector< P
     // NOTE: We iterate until i+3 < controlPoints.size()-1, which is one before the last curve.
     //       size() is an unsigned quantity, so we don't want to ever subtract from it,
     //       because negative numbers underflow.
-    for( int i = 1; i+4 < controlPoints.size(); ++i )
+    // Declare i outside of the for loop so we can use it to evaluate the last curve.
+    int i;
+    for( i = 1; i+4 < controlPoints.size(); ++i )
     {
         result.push_back( EvaluateCubicBSplineCurve( controlPoints[i], controlPoints[i+1], controlPoints[i+2], controlPoints[i+3], 0. ) );
     }
     // The last curve should be evaluated at .5.
     result.push_back( EvaluateCubicBSplineCurve( controlPoints[i], controlPoints[i+1], controlPoints[i+2], controlPoints[i+3], .5 ) );
+    
+    return result;
 }
 
 }

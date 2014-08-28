@@ -44,7 +44,7 @@ InterpolatingCurve::SetControlPoint( int i, const Point& p )
 
 // Returns points sampling the spline curve defined by the control points.
 const std::vector< Point >&
-InterpolatingCurve::GetCurve()
+InterpolatingCurve::GetCurvePoints()
 const
 {
     if( m_curvePoints.empty() ) doEvaluate();
@@ -133,26 +133,14 @@ CubicBezierCurve::doSetControlPoint( int i, const Point& p )
 }
 
 // Evaluated the given control points to fill m_curvePoints.
-void CubicBezierCurveBernstein::doEvaluate() const
+void
+CubicBezierCurve::doEvaluate()
+const
 {
     assert( m_curvePoints.empty() );
     // We can't evaluate if we don't have at least 4 points.
     if( m_controlPoints.size() < 4 ) return;
-    m_curvePoints = EvaluateCubicBezierSplineBernstein( m_controlPoints, kSamplesPerCurve );
-}
-void CubicBezierCurveMatrix::doEvaluate() const
-{
-    assert( m_curvePoints.empty() );
-    // We can't evaluate if we don't have at least 4 points.
-    if( m_controlPoints.size() < 4 ) return;
-    m_curvePoints = EvaluateCubicBezierSplineMatrix( m_controlPoints, kSamplesPerCurve );
-}
-void CubicBezierCurveCasteljau::doEvaluate() const
-{
-    assert( m_curvePoints.empty() );
-    // We can't evaluate if we don't have at least 4 points.
-    if( m_controlPoints.size() < 4 ) return;
-    m_curvePoints = EvaluateCubicBezierSplineCasteljau( m_controlPoints, kSamplesPerCurve );
+    m_curvePoints = EvaluateCubicBezierSpline( m_controlPoints, kSamplesPerCurve, m_approach );
 }
 
 /// ======================================================================================
@@ -212,7 +200,7 @@ const
     assert( m_curvePoints.empty() );
     // We can't evaluate if we don't have at least 4 points.
     if( m_controlPoints.size() < 4 ) return;
-    m_curvePoints = EvaluateCatmullRomSpline( m_controlPoints, kSamplesPerCurve );
+    m_curvePoints = EvaluateCatmullRomSpline( m_controlPoints, kSamplesPerCurve, m_alpha );
 }
 
 /// ======================================================================================
@@ -248,7 +236,7 @@ CubicBSplineCurve::doEvaluate()
 const
 {
     assert( m_curvePoints.empty() );
-    m_curvePoints = EvaluateBSpline( m_controlPoints, kSamplesPerCurve );
+    m_curvePoints = EvaluateCubicBSpline( m_controlPoints, kSamplesPerCurve );
 }
 
 }
