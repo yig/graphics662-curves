@@ -1,165 +1,225 @@
-#include "ppapi/cpp/instance.h"
-#include "ppapi/cpp/module.h"
-#include "ppapi/cpp/var.h"
+#include "Curve.h"
 
-#include <sstream>
-#include <iomanip>
+#include <cassert>
+#include <cmath>
 
-#include "MyCurve.h"
+#include <Eigen/Core>
+#include <Eigen/LU>
+using Eigen::MatrixXd;
+using std::vector;
 
-// Global functions for debugging.
+// Call these to raise a dialog box or log to the javascript console for debugging.
 // NOTE: You can pass either a const char* or an std::string.
-namespace { pp::Instance* anyInstance; }
-void jsAlert( const std::string& msg )
-{
-    if( anyInstance )
-    {
-        anyInstance->PostMessage( pp::Var( std::string( "alert " ) + msg ) );
-    }
-}
-void jsLog( const std::string& msg )
-{
-    if( anyInstance )
-    {
-        anyInstance->PostMessage( pp::Var( std::string( "log " ) + msg ) );
-    }
-}
+extern void jsAlert( const std::string& msg );
+extern void jsLog( const std::string& msg );
 
-namespace
+namespace Curve
 {
 
-std::ostream& operator<<( std::ostream& out, const std::vector< MyCurve::Point >& pts )
+// Add another point to the sequence of input points.
+void
+InterpolatingCurve::AddPoint( const Point& p )
 {
-    out << "[ ";
-    for( unsigned int i = 0; i < pts.size(); ++i )
-    {
-        if( i > 0 ) out << ", ";
-        
-        out << "[ " << pts.at(i).x() << ", " << pts.at(i).y() << " ]";
-    }
-    out << " ]";
+    doAddPoint( p );
+    NeedEvaluate();
+}
+
+// Get the control points for this spline.
+// Note that the format of the control points can vary (such as Hermite splines storing derivatives).
+const std::vector< Point >&
+InterpolatingCurve::GetControlPoints()
+const
+{
+    return m_controlPoints;
+}
+
+// Sets the control point at index 'i' to 'p'.
+void
+InterpolatingCurve::SetControlPoint( int i, const Point& p )
+{
+    doSetControlPoint( i, p );
+    NeedEvaluate();
+}
+
+// Returns points sampling the spline curve defined by the control points.
+const std::vector< Point >&
+InterpolatingCurve::GetCurve()
+const
+{
+    if( m_curvePoints.empty() ) doEvaluate();
     
-    return out;
-}
-std::istream& operator>>( std::istream& in, MyCurve::Point& pt )
-{
-    return in >> pt.x() >> pt.y();
+    return m_curvePoints;
 }
 
-class CurveInstance : public pp::Instance
+void
+InterpolatingCurve::NeedEvaluate()
 {
-public:
-    explicit CurveInstance( PP_Instance instance ) : pp::Instance( instance )
+    m_curvePoints.clear();
+}
+
+/// ======================================================================================
+
+// When adding a point, add new non-interpolated control points.
+void
+CubicBezierCurve::doAddPoint( const Point& p )
+{
+    // If this is our first point, just add it.
+    if( m_controlPoints.empty() )
     {
-        // For debugging:
-        anyInstance = this;
+        m_controlPoints.push_back( p );
     }
-    virtual ~CurveInstance() {}
+    // If this is our second point, 
+    else if( m_controlPoints.size() == 1 )
+    {
+        m_controlPoints.push_back( (1./3.)*( m_controlPoints.back() + p ) );
+        m_controlPoints.push_back( (2./3.)*( m_controlPoints.back() + p ) );
+        m_controlPoints.push_back( p );
+    }
+    // Otherwise we have the general case, where we want to reflect the previous point's tangent.
+    else
+    {
+        // 1 Reflect the previous point's tangent.
+        const Point& last_point = m_controlPoints.back();
+        const Point& last_off_curve = *(m_controlPoints.rbegin()+1);
+        m_controlPoints.push_back( last_point + (last_point - last_off_curve) );
+        
+        // 2 Add a new tangent.
+        m_controlPoints.push_back( (2./3.)*( m_controlPoints.back() + p ) );
+        
+        // 3 Add the point.
+        m_controlPoints.push_back( p );
+    }
+}
+
+// Override doSetControlPoint() in order to keep C1 continuity
+// when a non-interpolated control point is moved.
+void
+CubicBezierCurve::doSetControlPoint( int i, const Point& p )
+{
+    m_controlPoints.at( i ) = p;
     
-    virtual void HandleMessage( const pp::Var& var_message )
-    {
-        // This slows everything down, but is useful for debugging:
-        jsLog( std::string( "log HandleMessage: " ) + var_message.AsString() );
-        
-        // We only expect string messages.
-        if( !var_message.is_string() )
-        {
-            return;
-        }
-        
-        // Turn the message into an istream for processing.
-        std::istringstream msgstream( var_message.AsString() );
-        
-        std::string cmd;
-        msgstream >> cmd;
-        
-        if( cmd == "AddPoint" )
-        {
-            MyCurve::Point p;
-            msgstream >> p;
-            m_myCurve.AddPoint( p );
-        }
-        else if( cmd == "PickPoint" )
-        {
-            float x, y;
-            msgstream >> x >> y;
-            m_myCurve.PickPoint( x, y );
-        }
-        else if( cmd == "MovePicked" )
-        {
-            float x, y;
-            msgstream >> x >> y;
-            m_myCurve.MovePicked( x, y );
-        }
-        else if( cmd == "ClearAll" )
-        {
-            m_myCurve.ClearAll();
-        }
-        else if( cmd == "SetShowControlPoints" )
-        {
-            bool ctrlPoints;
-            msgstream >> std::boolalpha >> ctrlPoints;
-            
-            m_myCurve.SetShowControlPoints( ctrlPoints );
-        }
-        else if( cmd == "SetInterpolationStyle" )
-        {
-            std::string stylestr;
-            msgstream >> stylestr;
-            
-            MyCurve::MyCurve::InterpolationStyle style = MyCurve::MyCurve::INVALID_STYLE;
-            
-            if( stylestr == "BERNSTEIN" ) style = MyCurve::MyCurve::BERNSTEIN;
-            else if( stylestr == "CASTELJAU" ) style = MyCurve::MyCurve::CASTELJAU;
-            else if( stylestr == "MATRIX" ) style = MyCurve::MyCurve::MATRIX;
-            else if( stylestr == "BSPLINE" ) style = MyCurve::MyCurve::BSPLINE;
-            else if( stylestr == "HERMITE" ) style = MyCurve::MyCurve::HERMITE;
-            
-            m_myCurve.SetInterpolationStyle( style );
-        }
-        else if( cmd == "GetData" )
-        {
-            std::vector<MyCurve::Point> endPoints, interpPoints, ctrlPoints, curve;
-            
-            m_myCurve.GetData( endPoints, interpPoints, ctrlPoints, curve );
-            
-            // Package up some JSON and post it.
-            std::ostringstream packet;
-            // Set precision to 24 to preserve double-precision accuracy.
-            packet << std::setprecision( 24 ) << std::boolalpha;
-            packet << "{ \"endPoints\": " << endPoints;
-            packet << ", \"interpPoints\": " << interpPoints;
-            packet << ", \"ctrlPoints\": " << ctrlPoints;
-            packet << ", \"curve\": " << curve;
-            packet << "}";
-            
-            PostMessage( pp::Var( std::string("GetData ") + packet.str() ) );
-        }
-        else
-        {
-            jsAlert( std::string( "alert Unknown command: " ) + var_message.AsString() );
-        }
-    }
+    /// Cubic Bezier splines always have 3*n + 1 control points.
+    /// The 0-th, 3-rd, 6-th, 9-th, etc points are interpolated.
+    /// The rest are tangent points.
+    /// For C1 continuity, the 2nd and 4th should be reflected about the 3rd,
+    /// the 5th and 7th should be reflected about the 6th,
+    /// and so on in offsets of 3.
     
-private:
-    MyCurve::MyCurve m_myCurve;
-}; // ~CurveInstance
-
-class CurveModule : public pp::Module
-{
-public:
-    pp::Instance* CreateInstance( PP_Instance instance )
+    // Check for the 2nd and so on case.
+    if( i >= 2 && (i-2) % 3 == 0 )
     {
-        return new CurveInstance( instance );
+        const Point& on_curve = m_controlPoints.at( i+1 );
+        m_controlPoints.at( i+2 ) = on_curve + (on_curve - p);
     }
-}; // ~CurveModule
-
-} // ~anonymous
-
-namespace pp
-{
-Module* CreateModule()
-{
-    return new CurveModule();
+    // Check for the 4th and so on case.
+    else if( i >= 4 && (i-4) % 3 == 0 )
+    {
+        const Point& on_curve = m_controlPoints.at( i-1 );
+        m_controlPoints.at( i-2 ) = on_curve + (on_curve - p);
+    }
+    // Check for the 5th and so on case.
+    else if( i >= 5 && (i-5) % 3 == 0 )
+    {
+        const Point& on_curve = m_controlPoints.at( i+1 );
+        m_controlPoints.at( i+2 ) = on_curve + (on_curve - p);
+    }
+    // Check for the 7th and so on case.
+    else if( i >= 7 && (i-7) % 3 == 0 )
+    {
+        const Point& on_curve = m_controlPoints.at( i-1 );
+        m_controlPoints.at( i-2 ) = on_curve + (on_curve - p);
+    }
 }
-} // ~pp
+
+// Evaluated the given control points to fill m_curvePoints.
+void CubicBezierCurveBernstein::doEvaluate() const
+{
+    assert( m_curvePoints.empty() );
+    EvaluateCubicBezierSplineBernstein( m_controlPoints, kSamplesPerCurve, m_curvePoints );
+}
+void CubicBezierCurveMatrix::doEvaluate() const
+{
+    assert( m_curvePoints.empty() );
+    EvaluateCubicBezierSplineMatrix( m_controlPoints, kSamplesPerCurve, m_curvePoints );
+}
+void CubicBezierCurveCasteljau::doEvaluate() const
+{
+    assert( m_curvePoints.empty() );
+    EvaluateCubicBezierSplineCasteljau( m_controlPoints, kSamplesPerCurve, m_curvePoints );
+}
+
+/// ======================================================================================
+
+// When adding a point, add new non-interpolated control points.
+void
+CubicHermiteCurve::doAddPoint( const Point& p )
+{
+    // Give new points (0,0) derivatives.
+    m_controlPoints.push_back( p );
+    m_controlPoints.push_back( Point( 0,0 ) );
+    
+    // Recompute derivatives for C2 continuity.
+    CalculateHermiteSplineDerivativesForC2Continuity( m_controlPoints );
+}
+
+// Override doSetControlPoint() in order to keep C2 continuity
+// when a non-derivative control point is moved.
+void
+CubicHermiteCurve::doSetControlPoint( int i, const Point& p )
+{
+    m_controlPoints.at( i ) = p;
+    
+    // After adjusting a control point, we must recompute the derivatives
+    // to ensure that the curve stays C2 continuous.
+    // NOTE: This means that the derivatives will never be adjustable,
+    //       unless the bonus is implemented which allows the derivatives at
+    //       either end to be adjusted.
+    CalculateHermiteSplineDerivativesForC2Continuity( m_controlPoints );
+}
+
+// Evaluated the given control points to fill m_curvePoints.
+void
+CubicHermiteCurve::doEvaluate()
+const
+{
+    assert( m_curvePoints.empty() );
+    EvaluateCubicHermiteSpline( m_controlPoints, kSamplesPerCurve, m_curvePoints );
+}
+
+/// ======================================================================================
+
+// Add a point.
+void
+CubicCatmullRomCurve::doAddPoint( const Point& p )
+{
+    m_controlPoints.push_back( p );
+}
+
+// Evaluated the given control points to fill m_curvePoints.
+void
+CubicCatmullRomCurve::doEvaluate()
+const
+{
+    assert( m_curvePoints.empty() );
+    EvaluateCatmullRomSpline( m_controlPoints, kSamplesPerCurve, m_curvePoints );
+}
+
+/// ======================================================================================
+
+// Add a point.
+void
+CubicCatmullRomCurve::doAddPoint( const Point& p )
+{
+    m_controlPoints.push_back( p );
+}
+
+// Evaluated the given control points to fill m_curvePoints.
+void
+CubicCatmullRomCurve::doEvaluate()
+const
+{
+    assert( m_curvePoints.empty() );
+    EvaluateCatmullRomSpline( m_controlPoints, kSamplesPerCurve, m_curvePoints );
+}
+
+}
