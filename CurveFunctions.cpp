@@ -4,9 +4,14 @@ using std::vector;
 #include <Eigen/LU>
 using Eigen::MatrixXd;
 using Eigen::Matrix4d;
+using Eigen::Vector4d;
 
 #include <cassert>
 #include <cmath>
+
+#include "jsassert.h"
+#undef assert
+#define assert(cond) jsAssert(cond)
 
 // Call these to raise a dialog box or log to the javascript console for debugging.
 // NOTE: You can pass either a const char* or an std::string.
@@ -53,11 +58,11 @@ Point EvaluateCubicBezierCurveMatrix( const Point& p0, const Point& p1, const Po
     m(2,1) = 3;
     m(3,0) = 1;
     
-    MatrixXd ts(1,4);
-    ts(0,0) = t*t*t;
-    ts(1,0) = t*t;
-    ts(2,0) = t;
-    ts(3,0) = 1;
+    Vector4d ts;
+    ts(0) = t*t*t;
+    ts(1) = t*t;
+    ts(2) = t;
+    ts(3) = 1;
     
     MatrixXd ps(4,2);
     ps.row(0) = p0;
@@ -65,7 +70,7 @@ Point EvaluateCubicBezierCurveMatrix( const Point& p0, const Point& p1, const Po
     ps.row(2) = p2;
     ps.row(3) = p3;
     
-    return ts * m * ps;
+    return ps.transpose() * m * ts;
     
     /*
     Point p = (-1*p0 + 3*p1 - 3*p2 + 1*p3)*t*t*t 
@@ -99,21 +104,21 @@ std::vector< Point > EvaluateCubicBezierSpline( const std::vector< Point >& cont
     assert( samplesPerCurve > 0 );
     
     // ADD YOUR CODE HERE
+    const std::vector< Point >& C = controlPoints;
     std::vector< Point > result;
     // Reserve some space.
-    result.reserve( samplesPerCurve*(controlPoints.size()-1)/3 + 1 );
+    result.reserve( samplesPerCurve*(C.size()-1)/3 + 1 );
     // Evaluate each curve.
-    for( int i = 0; i+3 < controlPoints.size(); ++i )
+    for( int i = 0; i+3 < C.size(); i += 3 )
     {
-        const Point* p0 = &controlPoints.at(i);
         for( int ti = 0; ti < samplesPerCurve; ++ti )
         {
-            const real_t t = float(ti)/samplesPerCurve;
-            result.push_back( EvaluateCubicBezierCurve( *p0, *(p0+1), *(p0+2), *(p0+3), t, approach ) );
+            const real_t t = real_t(ti)/samplesPerCurve;
+            result.push_back( EvaluateCubicBezierCurve( C[i], C[i+1], C[i+2], C[i+3], t, approach ) );
         }
     }
     // Bezier splines interpolate, so the last point is the last control point.
-    result.push_back( controlPoints.back() );
+    result.push_back( C.back() );
     return result;
 }
 
@@ -140,21 +145,22 @@ std::vector< Point > EvaluateCubicHermiteSpline( const std::vector< Point >& con
     assert( samplesPerCurve > 0 );
     
     // ADD YOUR CODE HERE
+    const std::vector< Point >& C = controlPoints;
     std::vector< Point > result;
     // Reserve some space.
-    result.reserve( samplesPerCurve*(controlPoints.size()-1)/3 + 1 );
+    result.reserve( samplesPerCurve*(C.size()-1)/3 + 1 );
     // Evaluate each curve.
-    for( int i = 0; i+3 < controlPoints.size(); ++i )
+    for( int i = 0; i+3 < C.size(); i += 3 )
     {
-        const Point* p0 = &controlPoints.at(i);
         for( int ti = 0; ti < samplesPerCurve; ++ti )
         {
-            const real_t t = float(ti)/samplesPerCurve;
-            result.push_back( EvaluateCubicHermiteCurve( *p0, *(p0+1), *(p0+2), *(p0+3), t ) );
+            const real_t t = real_t(ti)/samplesPerCurve;
+            result.push_back( EvaluateCubicHermiteCurve( C[i], C[i+1], C[i+2], C[i+3], t ) );
         }
     }
     // Hermite splines interpolate, so the last point is the last interpolated control point.
-    result.push_back( *(controlPoints.rbegin()+1) );
+    assert( C.size() >= 2 );
+    result.push_back( C[C.size()-2] );
     return result;
 }
 
@@ -230,7 +236,7 @@ void CalculateHermiteSplineDerivativesForC2Continuity( std::vector< Point >& con
     
     C = A.fullPivLu().solve(P);
     for (int i = 0; i < dim; i++){
-        controlPoints[2*dim + 1] = Point(C(i,0), C(i,1));
+        controlPoints.at(2*dim + 1) = Point(C(i,0), C(i,1));
     }
 }
 
@@ -246,21 +252,21 @@ std::vector< Point > EvaluateCatmullRomSpline( const std::vector< Point >& contr
     assert( samplesPerCurve > 0 );
     
     // ADD YOUR CODE HERE
+    const std::vector< Point >& C = controlPoints;
     std::vector< Point > result;
     // Reserve some space.
-    result.reserve( samplesPerCurve*(controlPoints.size()-1)/3 + 1 );
+    result.reserve( samplesPerCurve*(C.size()-1)/3 + 1 );
     // Evaluate each curve.
-    for( int i = 0; i+3 < controlPoints.size(); ++i )
+    for( int i = 0; i+3 < C.size(); ++i )
     {
-        const Point* p0 = &controlPoints.at(i);
         for( int ti = 0; ti < samplesPerCurve; ++ti )
         {
-            const real_t t = float(ti)/samplesPerCurve;
-            result.push_back( EvaluateCatmullRomCurve( *p0, *(p0+1), *(p0+2), *(p0+3), t, alpha ) );
+            const real_t t = real_t(ti)/samplesPerCurve;
+            result.push_back( EvaluateCatmullRomCurve( C[i], C[i+1], C[i+2], C[i+3], t, alpha ) );
         }
     }
     // Catmull-Rom splines interpolate, so the last point is the last control point.
-    result.push_back( controlPoints.back() );
+    result.push_back( C.back() );
     return result;
 }
 // Evaluate a cubic Catmull-Rom Spline curve at location 't'.
@@ -331,23 +337,24 @@ std::vector< Point > EvaluateCubicBSpline( const std::vector< Point >& controlPo
     assert( samplesPerCurve > 0 );
     
     // ADD YOUR CODE HERE
+    const std::vector< Point >& C = controlPoints;
     std::vector< Point > result;
     // Reserve some space.
-    result.reserve( samplesPerCurve*(controlPoints.size()-1)/3 + 1 );
+    result.reserve( samplesPerCurve*(C.size()-1)/3 + 1 );
     // Evaluate each curve.
-    for( int i = 0; i+3 < controlPoints.size(); ++i )
+    for( int i = 0; i+3 < C.size(); ++i )
     {
-        const Point* p0 = &controlPoints.at(i);
         for( int ti = 0; ti < samplesPerCurve; ++ti )
         {
-            const real_t t = float(ti)/samplesPerCurve;
-            result.push_back( EvaluateCubicBSplineCurve( *p0, *(p0+1), *(p0+2), *(p0+3), t ) );
+            const real_t t = real_t(ti)/samplesPerCurve;
+            result.push_back( EvaluateCubicBSplineCurve( C[i], C[i+1], C[i+2], C[i+3], t ) );
         }
     }
     
     // The last point.
-    const Point* p0 = &controlPoints.at( controlPoints.size()-4 );
-    result.push_back( EvaluateCubicBSplineCurve( *p0, *(p0+1), *(p0+2), *(p0+3), 1. ) );
+    int i = controlPoints.size()-4;
+    assert( i+3 < C.size() );
+    result.push_back( EvaluateCubicBSplineCurve( C[i], C[i+1], C[i+2], C[i+3], 1. ) );
     
     return result;
 }
@@ -424,21 +431,23 @@ std::vector< Point > ComputeBSplineFromInterpolatingPoints( const std::vector< P
 std::vector< Point > ComputeInterpolatingPointsFromBSpline( const std::vector< Point >& controlPoints )
 {
     assert( controlPoints.size() >= 4 );
+    const std::vector< Point >& C = controlPoints;
     
     std::vector< Point > result;
-    result.push_back( EvaluateCubicBSplineCurve( controlPoints[0], controlPoints[1], controlPoints[2], controlPoints[3], .5 ) );
+    result.push_back( EvaluateCubicBSplineCurve( C[0], C[1], C[2], C[3], .5 ) );
     // The middle curves should be evaluated at 0.
     // NOTE: We iterate until i+3 < controlPoints.size()-1, which is one before the last curve.
     //       size() is an unsigned quantity, so we don't want to ever subtract from it,
     //       because negative numbers underflow.
     // Declare i outside of the for loop so we can use it to evaluate the last curve.
     int i;
-    for( i = 1; i+4 < controlPoints.size(); ++i )
+    for( i = 1; i+4 < C.size(); ++i )
     {
-        result.push_back( EvaluateCubicBSplineCurve( controlPoints[i], controlPoints[i+1], controlPoints[i+2], controlPoints[i+3], 0. ) );
+        result.push_back( EvaluateCubicBSplineCurve( C[i], C[i+1], C[i+2], C[i+3], 0. ) );
     }
     // The last curve should be evaluated at .5.
-    result.push_back( EvaluateCubicBSplineCurve( controlPoints[i], controlPoints[i+1], controlPoints[i+2], controlPoints[i+3], .5 ) );
+    assert( i+3 < C.size() );
+    result.push_back( EvaluateCubicBSplineCurve( C[i], C[i+1], C[i+2], C[i+3], .5 ) );
     
     return result;
 }

@@ -111,8 +111,22 @@ public:
         {
             msgstream >> m_curveType;
             
+            // Save the interpolated points before switching.
+            std::vector< Curve::Point > interpolated;
+            if( m_curve )
+            {
+                interpolated = m_curve->GetInterpolatedPoints();
+            }
+            
+            // Switch to the new curve type.
             delete m_curve;
             m_curve = NewCurveFactory( m_curveType );
+            
+            // Restore the interpolated points after switching.
+            if( m_curve )
+            {
+                for( int i = 0; i < interpolated.size(); ++i ) m_curve->AddPoint( interpolated.at(i) );
+            }
         }
         else if( cmd == "GetData" )
         {

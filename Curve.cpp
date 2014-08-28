@@ -4,6 +4,10 @@ using std::vector;
 #include <cassert>
 #include <cmath>
 
+#include "jsassert.h"
+#undef assert
+#define assert(cond) jsAssert(cond)
+
 // Call these to raise a dialog box or log to the javascript console for debugging.
 // NOTE: You can pass either a const char* or an std::string.
 extern void jsAlert( const std::string& msg );
@@ -60,6 +64,25 @@ InterpolatingCurve::NeedEvaluate()
 
 /// ======================================================================================
 
+void
+CubicBezierCurve::SetEvaluateApproach( EvaluateCubicBezierCurveApproach approach )
+{
+    m_approach = approach;
+    NeedEvaluate();
+}
+
+std::vector< Point >
+CubicBezierCurve::GetInterpolatedPoints() const
+{
+    std::vector< Point > result;
+    // The 0th point, 3rd point, 6th point, etc are all interpolated.
+    for( int i = 0; i < m_controlPoints.size(); i += 3 )
+    {
+        result.push_back( m_controlPoints.at(i) );
+    }
+    return result;
+}
+
 // When adding a point, add new non-interpolated control points.
 void
 CubicBezierCurve::doAddPoint( const Point& p )
@@ -72,8 +95,8 @@ CubicBezierCurve::doAddPoint( const Point& p )
     // If this is our second point, 
     else if( m_controlPoints.size() == 1 )
     {
-        m_controlPoints.push_back( (1./3.)*( m_controlPoints.back() + p ) );
-        m_controlPoints.push_back( (2./3.)*( m_controlPoints.back() + p ) );
+        m_controlPoints.push_back( (2./3.)*m_controlPoints.back() + (1./3.)*p );
+        m_controlPoints.push_back( (1./3.)*m_controlPoints.back() + (2./3.)*p );
         m_controlPoints.push_back( p );
     }
     // Otherwise we have the general case, where we want to reflect the previous point's tangent.
@@ -85,7 +108,7 @@ CubicBezierCurve::doAddPoint( const Point& p )
         m_controlPoints.push_back( last_point + (last_point - last_off_curve) );
         
         // 2 Add a new tangent.
-        m_controlPoints.push_back( (2./3.)*( m_controlPoints.back() + p ) );
+        m_controlPoints.push_back( (1./3.)*m_controlPoints.back() + (2./3.)*p );
         
         // 3 Add the point.
         m_controlPoints.push_back( p );
@@ -97,7 +120,8 @@ CubicBezierCurve::doAddPoint( const Point& p )
 void
 CubicBezierCurve::doSetControlPoint( int i, const Point& p )
 {
-    m_controlPoints.at( i ) = p;
+    // Make an alias to the control points for shorter expressions.
+    vector< Point >& C = m_controlPoints;
     
     /// Cubic Bezier splines always have 3*n + 1 control points.
     /// The 0-th, 3-rd, 6-th, 9-th, etc points are interpolated.
@@ -109,27 +133,56 @@ CubicBezierCurve::doSetControlPoint( int i, const Point& p )
     // Check for the 2nd and so on case.
     if( i >= 2 && (i-2) % 3 == 0 )
     {
-        const Point& on_curve = m_controlPoints.at( i+1 );
-        m_controlPoints.at( i+2 ) = on_curve + (on_curve - p);
+        const Point& on_curve = C.at( i+1 );
+        if( i+2 < C.size() )
+        {
+            C.at( i+2 ) = on_curve + (on_curve - p);
+        }
     }
     // Check for the 4th and so on case.
     else if( i >= 4 && (i-4) % 3 == 0 )
     {
-        const Point& on_curve = m_controlPoints.at( i-1 );
-        m_controlPoints.at( i-2 ) = on_curve + (on_curve - p);
+        const Point& on_curve = C.at( i-1 );
+        if( i-2 >= 0 )
+        {
+            C.at( i-2 ) = on_curve + (on_curve - p);
+        }
     }
     // Check for the 5th and so on case.
     else if( i >= 5 && (i-5) % 3 == 0 )
     {
-        const Point& on_curve = m_controlPoints.at( i+1 );
-        m_controlPoints.at( i+2 ) = on_curve + (on_curve - p);
+        const Point& on_curve = C.at( i+1 );
+        if( i+2 < C.size() )
+        {
+            C.at( i+2 ) = on_curve + (on_curve - p);
+        }
     }
     // Check for the 7th and so on case.
     else if( i >= 7 && (i-7) % 3 == 0 )
     {
-        const Point& on_curve = m_controlPoints.at( i-1 );
-        m_controlPoints.at( i-2 ) = on_curve + (on_curve - p);
+        const Point& on_curve = C.at( i-1 );
+        if( i-2 >= 0 )
+        {
+            C.at( i-2 ) = on_curve + (on_curve - p);
+        }
     }
+    // Finally, if we are moving an on-curve control point itself,
+    // translate the adjacent tangents the same way.
+    else if( i % 3 == 0 )
+    {
+        const Point& dp = p - C.at( i );
+        
+        if( i-1 >= 0 )
+        {
+            C.at( i-1 ) += dp;
+        }
+        if( i+1 < C.size() )
+        {
+            C.at( i+1 ) += dp;
+        }
+    }
+    
+    C.at( i ) = p;
 }
 
 // Evaluated the given control points to fill m_curvePoints.
@@ -145,6 +198,18 @@ const
 
 /// ======================================================================================
 
+std::vector< Point >
+CubicHermiteCurve::GetInterpolatedPoints() const
+{
+    std::vector< Point > result;
+    // The even points are interpolated.
+    for( int i = 0; i < m_controlPoints.size(); i += 2 )
+    {
+        result.push_back( m_controlPoints.at(i) );
+    }
+    return result;
+}
+
 // When adding a point, add new non-interpolated control points.
 void
 CubicHermiteCurve::doAddPoint( const Point& p )
@@ -154,7 +219,7 @@ CubicHermiteCurve::doAddPoint( const Point& p )
     m_controlPoints.push_back( Point( 0,0 ) );
     
     // Recompute derivatives for C2 continuity.
-    CalculateHermiteSplineDerivativesForC2Continuity( m_controlPoints );
+    // CalculateHermiteSplineDerivativesForC2Continuity( m_controlPoints );
 }
 
 // Override doSetControlPoint() in order to keep C2 continuity
@@ -185,6 +250,13 @@ const
 
 /// ======================================================================================
 
+std::vector< Point >
+CatmullRomCurve::GetInterpolatedPoints() const
+{
+    // Every point is interpolated.
+    return m_controlPoints;
+}
+
 // Add a point.
 void
 CatmullRomCurve::doAddPoint( const Point& p )
@@ -204,6 +276,12 @@ const
 }
 
 /// ======================================================================================
+
+std::vector< Point >
+CubicBSplineCurve::GetInterpolatedPoints() const
+{
+    return ComputeInterpolatingPointsFromBSpline( m_controlPoints );
+}
 
 // Add a point.
 void
