@@ -30,7 +30,7 @@ body
 }
 canvas
 {
-    border: 1px solid #000;
+    outline: 1px solid #000;
 }
 
 #nacl_holder embed
@@ -122,10 +122,21 @@ $(document).ready( function() {
         
         if( myCurveData == null ) return;
         
+        var kBackgroundColor = 'rgb( 0,0,0 )';
+        var kInterpPointColor = 'rgb( 0,0,255 )';
+        var kCurveColor = 'rgb(0,0,0)';
+        var kCurveWidth = 4;
+        var kControlPointColor = 'rgb(255,50,50)';
+        var kControlPointLineWidth = 2;
+        var kEndPointColor = 'rgb(0,200,0)';
+        var kEndPointLineWidth = 2;
+        
         // A solid black background:
         // UPDATE: Let's leave it translucent.
-        ctx.fillStyle = "rgb( 0,0,0 )";
+        /*
+        ctx.fillStyle = kBackgroundColor;
         ctx.fillRect( 0, 0, canvas.width, canvas.height );
+        */
         
         {
             var endPoints = myCurveData.endPoints;
@@ -136,7 +147,7 @@ $(document).ready( function() {
             if( interpPoints.length == 0 ) return;
             else if( interpPoints.length == 1 )
             {
-                ctx.fillStyle = "rgb( 0,0,255 )";
+                ctx.fillStyle = kInterpPointColor;
                 
                 ctx.beginPath();
                 DrawCircle( interpPoints[0] );
@@ -151,7 +162,7 @@ $(document).ready( function() {
                 var showCtrl = $("#show_control_points").is(':checked');
                 
                 if (style != 'BSPLINE' && style != 'HERMITE'){
-                    ctx.fillStyle = 'rgb(0,255,0)';
+                    ctx.fillStyle = kEndPointColor;
                     
                     // Draw the two end points.
                     ctx.beginPath();
@@ -161,8 +172,8 @@ $(document).ready( function() {
                     
                     
                     // Connect end points with interpolation points with straight lines.
-                    ctx.strokeStyle = 'rgb(0,255,0)';
-                    ctx.lineWidth = 2;
+                    ctx.strokeStyle = kEndPointColor;
+                    ctx.lineWidth = kEndPointLineWidth;
                     
                     ctx.beginPath();
                     
@@ -176,8 +187,8 @@ $(document).ready( function() {
                 }
                 
                 // Draw the curve.
-                ctx.lineWidth = 2;
-                ctx.strokeStyle = 'rgb(255,0,0)';
+                ctx.lineWidth = kCurveWidth;
+                ctx.strokeStyle = kCurveColor;
                 ctx.beginPath();
                 for( var i = 0; i < curve.length - 1; i++ ){
                     ctx.moveTo(curve[i][0], curve[i][1]);
@@ -185,19 +196,11 @@ $(document).ready( function() {
                 }
                 ctx.stroke();
                 
-                // Draw interpolation points.
-                ctx.lineWidth = 2;
-                ctx.fillStyle = 'rgb(0,0,255)';
-                ctx.beginPath();
-                for( var i = 0; i < interpPoints.length; i++ ){
-                    DrawCircle(interpPoints[i]);
-                }
-                ctx.fill();
-                
                 // Draw control points and lines that connect them
+                ctx.lineWidth = kControlPointLineWidth;
                 if (showCtrl && ctrlPoints.length > 0){
-                    ctx.fillStyle = 'rgb(255,255,0)';
-                    ctx.strokeStyle = 'rgb(255,255,0)';
+                    ctx.fillStyle = kControlPointColor;
+                    ctx.strokeStyle = kControlPointColor;
                     //B-spline, draw its control points
                     if (style == 'BSPLINE'){
                         ctx.beginPath();
@@ -227,15 +230,14 @@ $(document).ready( function() {
                             DrawCircle(AddPoints(interpPoints[i], ctrlPoints[i]));
                         }
                         ctx.fill();
-                    }else{
+                    } else {
                         //Bezier curve, draw its control points
                         ctx.beginPath();
                         for (var i = 0; i < interpPoints.length - 1; i++){
                             ctx.moveTo(interpPoints[i][0], interpPoints[i][1]);
                             ctx.lineTo(ctrlPoints[i * 2][0], ctrlPoints[i * 2][1]);
                             
-                            ctx.moveTo(ctrlPoints[i * 2][0], ctrlPoints[i * 2][1]);
-                            ctx.lineTo(ctrlPoints[i * 2 + 1][0], ctrlPoints[i * 2 + 1][1]);
+                            // ctx.lineTo(ctrlPoints[i * 2 + 1][0], ctrlPoints[i * 2 + 1][1]);
                             
                             ctx.moveTo(ctrlPoints[i * 2 + 1][0], ctrlPoints[i * 2 + 1][1]);
                             ctx.lineTo(interpPoints[i + 1][0], interpPoints[i + 1][1]);
@@ -249,6 +251,14 @@ $(document).ready( function() {
                         ctx.fill();
                     }
                 }
+                
+                // Draw interpolation points.
+                ctx.fillStyle = kInterpPointColor;
+                ctx.beginPath();
+                for( var i = 0; i < interpPoints.length; i++ ){
+                    DrawCircle(interpPoints[i]);
+                }
+                ctx.fill();
             }
         }
     }
