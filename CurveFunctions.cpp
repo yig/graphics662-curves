@@ -419,12 +419,8 @@ std::vector< Point > ComputeBSplineFromInterpolatingPoints( const std::vector< P
     for (int i = 0; i < totalPoints + degree * 2; i++){
         L.push_back(i - degree);
     }
-    for (int i = 0; i < dim; i++){
-        for (int j = 0; j < dim; j++){
-            A(i,j) = 0.0;
-        }
-    }
-
+    A.setZero( dim, dim );
+    
     // These computeDN and computeN are recursive functions
     A(0,0) = computeDN(L,3,0,0,2); A(0,1) = computeDN(L,3,1,0,2); A(0,2) = computeDN(L,3,2,0,2); A(0,3) = computeDN(L,3,3,0,2);
     for (int i = 1; i < dim - 2; i++){
@@ -448,7 +444,7 @@ std::vector< Point > ComputeBSplineFromInterpolatingPoints( const std::vector< P
     }
     P(dim-1,0) = 0; P(dim-1,1) = 0;
     C = A.fullPivLu().solve(P);
-    for (int i = 0; i < totalPoints + 2; i++){
+    for (int i = 0; i < dim; i++){
         result.push_back(Point(C(i,0), C(i,1)));
     }
     return result;
@@ -461,20 +457,15 @@ std::vector< Point > ComputeInterpolatingPointsFromBSpline( const std::vector< P
     const std::vector< Point >& C = controlPoints;
     
     std::vector< Point > result;
-    result.push_back( EvaluateCubicBSplineCurve( C[0], C[1], C[2], C[3], .5 ) );
-    // The middle curves should be evaluated at 0.
-    // NOTE: We iterate until i+3 < controlPoints.size()-1, which is one before the last curve.
-    //       size() is an unsigned quantity, so we don't want to ever subtract from it,
-    //       because negative numbers underflow.
-    // Declare i outside of the for loop so we can use it to evaluate the last curve.
-    int i;
-    for( i = 1; i+4 < C.size(); ++i )
+    // The interpolated points are at the start and end of each cubic B-Spline
+    // (they are continuous).
+    // So let's just sample the t=1 point on every cubic BSpline,
+    // as well as the t=0 point of the first one.
+    result.push_back( EvaluateCubicBSplineCurve( C[0], C[1], C[2], C[3], 0. ) );
+    for( int i = 0; i+3 < C.size(); ++i )
     {
-        result.push_back( EvaluateCubicBSplineCurve( C[i], C[i+1], C[i+2], C[i+3], 0. ) );
+        result.push_back( EvaluateCubicBSplineCurve( C[i], C[i+1], C[i+2], C[i+3], 1. ) );
     }
-    // The last curve should be evaluated at .5.
-    assert( i+3 < C.size() );
-    result.push_back( EvaluateCubicBSplineCurve( C[i], C[i+1], C[i+2], C[i+3], .5 ) );
     
     return result;
 }

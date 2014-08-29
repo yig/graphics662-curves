@@ -293,7 +293,9 @@ CubicBSplineCurve::GetInterpolatedPoints() const
 void
 CubicBSplineCurve::doAddPoint( const Point& p )
 {
+    // Until we have two points, store the points directly in m_controlPoints.
     if( m_controlPoints.empty() ) m_controlPoints.push_back( p );
+    // If we already have one, compute a BSpline to interpolate these two.
     else if( m_controlPoints.size() == 1 )
     {
         std::vector< Point > interpPoints( m_controlPoints );
@@ -303,6 +305,8 @@ CubicBSplineCurve::doAddPoint( const Point& p )
         // Compute the BSpline interpolating the points.
         m_controlPoints = ComputeBSplineFromInterpolatingPoints( interpPoints );
     }
+    // If we already have more than one, compute the previously interpolated points
+    // and then recreate the BSpline.
     else
     {
         // Figure out the interpolating points created from the BSpline.
