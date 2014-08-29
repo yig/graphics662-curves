@@ -41,12 +41,12 @@ Point EvaluateCubicBezierCurve( const Point& p0, const Point& p1, const Point& p
 Point EvaluateCubicBezierCurveBernstein( const Point& p0, const Point& p1, const Point& p2, const Point& p3, const real_t t )
 {
     // ADD YOUR CODE HERE
-	Point result
-	    = (1-t) * (1-t) * (1-t) * p0
-		+ 3 * t * (1-t) * (1-t) * p1
-		+ 3 * t * t * (1-t) * p2
-		+ t * t * t * p3;
-	return result;
+    Point result
+        = (1-t) * (1-t) * (1-t) * p0
+        + 3 * t * (1-t) * (1-t) * p1
+        + 3 * t * t * (1-t) * p2
+        + t * t * t * p3;
+    return result;
 }
 Point EvaluateCubicBezierCurveMatrix( const Point& p0, const Point& p1, const Point& p2, const Point& p3, const real_t t )
 {
@@ -80,24 +80,24 @@ Point EvaluateCubicBezierCurveMatrix( const Point& p0, const Point& p1, const Po
     
     /*
     Point p = (-1*p0 + 3*p1 - 3*p2 + 1*p3)*t*t*t 
-		    + ( 3*p0 - 6*p1 + 3*p2)*t*t
-		    + (-3*p0 + 3*p1)*t
-		    + 1.0*p0;
-	
-	return p;
-	*/
+            + ( 3*p0 - 6*p1 + 3*p2)*t*t
+            + (-3*p0 + 3*p1)*t
+            + 1.0*p0;
+    
+    return p;
+    */
 }
 Point EvaluateCubicBezierCurveCasteljau( const Point& p0, const Point& p1, const Point& p2, const Point& p3, const real_t t )
 {
     // ADD YOUR CODE HERE
-	Point tmp0, tmp1, tmp2;
-	tmp0 = p0 * (1-t) + p1 * t;
-	tmp1 = p1 * (1-t) + p2 * t;
-	tmp2 = p2 * (1-t) + p3 * t;
-	tmp0 = tmp0 * (1-t) + tmp1 * t;
-	tmp1 = tmp1 * (1-t) + tmp2 * t;
-	tmp0 = tmp0 * (1-t) + tmp1 * t;
-	return tmp0;
+    Point tmp0, tmp1, tmp2;
+    tmp0 = p0 * (1-t) + p1 * t;
+    tmp1 = p1 * (1-t) + p2 * t;
+    tmp2 = p2 * (1-t) + p3 * t;
+    tmp0 = tmp0 * (1-t) + tmp1 * t;
+    tmp1 = tmp1 * (1-t) + tmp2 * t;
+    tmp0 = tmp0 * (1-t) + tmp1 * t;
+    return tmp0;
 }
 
 // Evaluate a cubic Bezier spline with control points 'controlPoints' arranged
@@ -140,7 +140,7 @@ Point EvaluateCubicHermiteCurve( const Point& p0, const Point& dp0, const Point&
          p1 * ( -2*t*t*t + 3*t*t ) +
         dp1 * ( t*t*t - t*t )
         ;
-	return p;
+    return p;
 }
 
 // Evaluate a cubic Hermite spline with control points 'controlPoints' arranged:
@@ -184,7 +184,7 @@ std::vector< Point > EvaluateCubicHermiteSpline( const std::vector< Point >& con
 //       I have included the Eigen matrix and linear algebra package that can solve linear systems.
 //       Below is an example showing how to use the linear system solver.
 //
-//	MatrixXd A(3,3);
+//  MatrixXd A(3,3);
 //  MatrixXd c(3,1);
 //  MatrixXd p(3,1);
 //  A(0,0) = 1.0; A(0,1) = 0.0; A(0,2) = 0.0;
@@ -204,9 +204,9 @@ void CalculateHermiteSplineDerivativesForC2Continuity( std::vector< Point >& con
     
     // ADD YOUR CODE HERE
     int dim = controlPoints.size()/2;
-	MatrixXd A(dim, dim);
-	MatrixXd C(dim, 2);
-	MatrixXd P(dim, 2);
+    MatrixXd A(dim, dim);
+    MatrixXd C(dim, 2);
+    MatrixXd P(dim, 2);
     
     
     // Initialize the matrix to zeros.
@@ -326,31 +326,31 @@ namespace
 // You may add helper functions here.
 real_t computeN( const std::vector< real_t >& L, int n, int j, real_t t )
 {
-	if (t < L[j] || t >= L[j+1+n])
-		return 0.0;
-	if (n == 0){
-		if (t >= L[j] && t < L[j+1])
-			return 1.0;
-		else
-			return 0.0;
-	}
-	else{
-		real_t v1 = (t - L[j]) / (L[j + n] - L[j]) * computeN(L, n-1, j, t);
-		real_t v2 = (L[j+n+1] - t) / (L[j + n + 1] - L[j +1]) * computeN(L, n-1, j+1, t);
-		return v1 + v2;
-	}
+    if (t < L[j] || t >= L[j+1+n])
+        return 0.0;
+    if (n == 0){
+        if (t >= L[j] && t < L[j+1])
+            return 1.0;
+        else
+            return 0.0;
+    }
+    else{
+        real_t v1 = (t - L[j]) / (L[j + n] - L[j]) * computeN(L, n-1, j, t);
+        real_t v2 = (L[j+n+1] - t) / (L[j + n + 1] - L[j +1]) * computeN(L, n-1, j+1, t);
+        return v1 + v2;
+    }
 }
 
 
 real_t computeDN( const std::vector< real_t >& L, int n, int j, int t, int d )
 {
-	if (d == 0){
-		return computeN(L, n,j,t);
-	}else{
-		real_t v1 = 1 / (L[j+n] - L[j]) * computeDN(L, n-1, j, t, d-1);
-		real_t v2 = 1 / (L[j+n+1] - L[j+1]) * computeDN(L, n-1, j+1, t, d-1);
-		return n * (v1 - v2);
-	}
+    if (d == 0){
+        return computeN(L, n,j,t);
+    }else{
+        real_t v1 = 1 / (L[j+n] - L[j]) * computeDN(L, n-1, j, t, d-1);
+        real_t v2 = 1 / (L[j+n+1] - L[j+1]) * computeDN(L, n-1, j+1, t, d-1);
+        return n * (v1 - v2);
+    }
 }
 }
 
@@ -406,13 +406,13 @@ std::vector< Point > ComputeBSplineFromInterpolatingPoints( const std::vector< P
     std::vector< Point > result;
     int totalPoints = interpPoints.size();
     
-	// Prepare data
-	if (totalPoints < 2) return result;
-	int degree = 3;
-	int dim = totalPoints + 2;
-	MatrixXd A(dim, dim);
-	MatrixXd C(dim, 2);
-	MatrixXd P(dim, 2);
+    // Prepare data
+    if (totalPoints < 2) return result;
+    int degree = 3;
+    int dim = totalPoints + 2;
+    MatrixXd A(dim, dim);
+    MatrixXd C(dim, 2);
+    MatrixXd P(dim, 2);
     
     // Compute coefficients
     std::vector< real_t > L;
