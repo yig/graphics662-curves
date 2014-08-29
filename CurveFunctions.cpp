@@ -21,6 +21,12 @@ extern void jsLog( const std::string& msg );
 namespace Curve
 {
 
+// Bezier helper functions.
+namespace
+{
+// You may add helper functions here.
+}
+
 // Evaluate a cubic Bezier curve at location 't'.
 Point EvaluateCubicBezierCurve( const Point& p0, const Point& p1, const Point& p2, const Point& p3, const real_t t, EvaluateCubicBezierCurveApproach approach )
 {
@@ -128,10 +134,12 @@ std::vector< Point > EvaluateCubicBezierSpline( const std::vector< Point >& cont
 Point EvaluateCubicHermiteCurve( const Point& p0, const Point& dp0, const Point& p1, const Point& dp1, const real_t t )
 {
     // ADD YOUR CODE HERE
-    Point p = (2 * t * t * t - 3 * t * t + 1) * p0 
-		    + (t * t * t - 2 * t * t + t) * dp0
-			+ (-2 * t * t * t + 3 * t * t) * p1
-			+ (t * t * t - t * t) * dp1;
+    Point p =
+         p0 * ( 2*t*t*t - 3*t*t + 1 ) +
+        dp0 * ( t*t*t - 2*t*t + t ) +
+         p1 * ( -2*t*t*t + 3*t*t ) +
+        dp1 * ( t*t*t - t*t )
+        ;
 	return p;
 }
 
@@ -148,9 +156,9 @@ std::vector< Point > EvaluateCubicHermiteSpline( const std::vector< Point >& con
     const std::vector< Point >& C = controlPoints;
     std::vector< Point > result;
     // Reserve some space.
-    result.reserve( samplesPerCurve*(C.size()-1)/3 + 1 );
+    result.reserve( samplesPerCurve*( C.size()/2 - 1 ) + 1 );
     // Evaluate each curve.
-    for( int i = 0; i+3 < C.size(); i += 3 )
+    for( int i = 0; i+3 < C.size(); i += 2 )
     {
         for( int ti = 0; ti < samplesPerCurve; ++ti )
         {
@@ -188,6 +196,9 @@ std::vector< Point > EvaluateCubicHermiteSpline( const std::vector< Point >& con
 //  The result will be stored in c as follows: c(0,0) = 1.0; c(1,0) = 2.0; c(3,0) = 3.0, which satisfies Ac = p.
 void CalculateHermiteSplineDerivativesForC2Continuity( std::vector< Point >& controlPoints )
 {
+    // Do nothing if there aren't enough control points.
+    if( controlPoints.size() < 4 ) return;
+    
     assert( controlPoints.size() >= 4 );
     assert( controlPoints.size() % 2 == 0 );
     
@@ -197,46 +208,54 @@ void CalculateHermiteSplineDerivativesForC2Continuity( std::vector< Point >& con
 	MatrixXd C(dim, 2);
 	MatrixXd P(dim, 2);
     
-    // Zero A:
+    
+    // Initialize the matrix to zeros.
     A.setZero(dim, dim);
     
-    // Determine the boundary slope either by endPoints or automatically
-    if( true )
+    
+    // Regular row equations (from 1 to dim-1).
+    for( int i = 1; i < dim-1; ++i )
     {
-        // Additional constraints: second derivative are zero at end points
-        // first row	
-        A(0,0) = 2;
-        A(0,1) = 1;
-        P.row(0) = 3 * (controlPoints[2] - controlPoints[0]);
+        A( i,i-1 ) = 1;
+        A( i,i   ) = 4;
+        A( i,i+1 ) = 1;
         
-        // last row
-        A(dim-1, dim-2) = 1;
-        A(dim-1, dim-1) = 2;
-        P.row(dim-1) =  3 * (controlPoints[2*(dim-1)] - controlPoints[2*(dim-2)]);
+        P.row( i ) = 3*( controlPoints.at( 2*(i+1) ) - controlPoints.at( 2*(i-1) ) );
     }
+    
+    
+    // The boundary equations are the last two equations.
+    const bool kNaturalBoundaries = true;
+    // Determine the boundary slope naturally (second derivative = 0).
+    if( kNaturalBoundaries )
+    {
+        // Starting boundary
+        A( 0, 0 ) = 2;
+        A( 0, 1 ) = 1;
+        P.row( 0 ) = 3*( controlPoints.at( 2 ) - controlPoints.at( 0 ) );
+        
+        // Ending boundary
+        A( dim-1, dim-2 ) = 1;
+        A( dim-1, dim-1 ) = 2;
+        P.row( dim-1 ) = 3*( controlPoints.at( 2*(dim-1) ) - controlPoints.at( 2*(dim-2) ) );
+    }
+    // Determine the boundary slope by preserving the current slope.
     else
     {
         // First derivatives are specified by endPoints.
-        A(0,0) = 1;
-        P.row(0) = controlPoints[1];
+        A( 0, 0 ) = 1;
+        P.row( 0 ) = controlPoints.at(1);
         
-        A(dim-1,dim-1) = 1;
-        P.row(dim-1) = controlPoints.back();
+        A( dim-1, dim-1 ) = 1;
+        P.row( dim-1 ) = controlPoints.back();
     }
     
-    //middle rows
-    for (int i = 1; i < dim - 1; i++)
-    {
-        A(i, i-1) = 1; A(i, i) = 4; A(i, i+1) = 1;
-    }
-    for (int i = 1; i < dim - 1; i++)
-    {
-        P.row(i) = 3 * (controlPoints[2*(i+1)] - controlPoints[2*(i-1)]);
-    }
     
+    // Solve the system of equations.
     C = A.fullPivLu().solve(P);
-    for (int i = 0; i < dim; i++){
-        controlPoints.at(2*dim + 1) = Point(C(i,0), C(i,1));
+    for( int i = 0; i < dim; ++i )
+    {
+        controlPoints.at( 2*i + 1 ) = Point( C(i,0), C(i,1) );
     }
 }
 
@@ -263,7 +282,7 @@ std::vector< Point > EvaluateCatmullRomSpline( const std::vector< Point >& contr
     
     std::vector< Point > result;
     // Reserve some space.
-    result.reserve( samplesPerCurve*(C.size()-1)/3 + 1 );
+    result.reserve( samplesPerCurve*(C.size()-3) + 1 );
     // Evaluate each curve.
     for( int i = 0; i+3 < C.size(); ++i )
     {
@@ -304,7 +323,7 @@ Point EvaluateCatmullRomCurve( const Point& p0, const Point& p1, const Point& p2
 // B-Spline helper functions
 namespace
 {
-// ADD YOUR CODE HERE
+// You may add helper functions here.
 real_t computeN( const std::vector< real_t >& L, int n, int j, real_t t )
 {
 	if (t < L[j] || t >= L[j+1+n])
@@ -348,7 +367,7 @@ std::vector< Point > EvaluateCubicBSpline( const std::vector< Point >& controlPo
     const std::vector< Point >& C = controlPoints;
     std::vector< Point > result;
     // Reserve some space.
-    result.reserve( samplesPerCurve*(C.size()-1)/3 + 1 );
+    result.reserve( samplesPerCurve*(C.size()-3) + 1 );
     // Evaluate each curve.
     for( int i = 0; i+3 < C.size(); ++i )
     {

@@ -217,9 +217,15 @@ CubicHermiteCurve::doAddPoint( const Point& p )
     // Give new points (0,0) derivatives.
     m_controlPoints.push_back( p );
     m_controlPoints.push_back( Point( 0,0 ) );
+    // If we have more than one interpolated point, set the new derivative
+    // to 1/2 of the vector between them.
+    if( m_controlPoints.size() > 4 )
+    {
+        m_controlPoints.back() = .5*( m_controlPoints.at( m_controlPoints.size()-2 ) - m_controlPoints.at( m_controlPoints.size()-4 ) );
+    }
     
-    // Recompute derivatives for C2 continuity.
-    // CalculateHermiteSplineDerivativesForC2Continuity( m_controlPoints );
+    // Compute derivatives to ensure C2 continuity.
+    CalculateHermiteSplineDerivativesForC2Continuity( m_controlPoints );
 }
 
 // Override doSetControlPoint() in order to keep C2 continuity
