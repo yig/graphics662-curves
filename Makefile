@@ -8,7 +8,7 @@
 VALID_TOOLCHAINS := pnacl
 
 NACL_SDK_ROOT=/Users/yotam/Work/ext/native_client/nacl_sdk/pepper_35
-NACL_SDK_ROOT ?= $(abspath $(CURDIR)/../../..)
+NACL_SDK_ROOT ?= $(abspath $(CURDIR)/..)
 
 include $(NACL_SDK_ROOT)/tools/common.mk
 
