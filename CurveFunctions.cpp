@@ -323,35 +323,6 @@ Point EvaluateCatmullRomCurve( const Point& p0, const Point& p1, const Point& p2
 // B-Spline helper functions
 namespace
 {
-// You may add helper functions here.
-real_t computeN( const std::vector< real_t >& L, int n, int j, real_t t )
-{
-    if (t < L[j] || t >= L[j+1+n])
-        return 0.0;
-    if (n == 0){
-        if (t >= L[j] && t < L[j+1])
-            return 1.0;
-        else
-            return 0.0;
-    }
-    else{
-        real_t v1 = (t - L[j]) / (L[j + n] - L[j]) * computeN(L, n-1, j, t);
-        real_t v2 = (L[j+n+1] - t) / (L[j + n + 1] - L[j +1]) * computeN(L, n-1, j+1, t);
-        return v1 + v2;
-    }
-}
-
-
-real_t computeDN( const std::vector< real_t >& L, int n, int j, int t, int d )
-{
-    if (d == 0){
-        return computeN(L, n,j,t);
-    }else{
-        real_t v1 = 1 / (L[j+n] - L[j]) * computeDN(L, n-1, j, t, d-1);
-        real_t v2 = 1 / (L[j+n+1] - L[j+1]) * computeDN(L, n-1, j+1, t, d-1);
-        return n * (v1 - v2);
-    }
-}
 }
 
 // Evaluate a cubic B-Spline with control points 'controlPoints' arranged:
@@ -404,48 +375,38 @@ std::vector< Point > ComputeBSplineFromInterpolatingPoints( const std::vector< P
     
     // ADD YOUR CODE HERE
     std::vector< Point > result;
-    int totalPoints = interpPoints.size();
     
     // Prepare data
-    if (totalPoints < 2) return result;
-    int degree = 3;
-    int dim = totalPoints + 2;
-    MatrixXd A(dim, dim);
-    MatrixXd C(dim, 2);
-    MatrixXd P(dim, 2);
+    const int N = interpPoints.size();
+    if( N < 2 ) return result;
     
-    // Compute coefficients
-    std::vector< real_t > L;
-    for (int i = 0; i < totalPoints + degree * 2; i++){
-        L.push_back(i - degree);
-    }
-    A.setZero( dim, dim );
+    MatrixXd A, RHS;
+    A.setZero( N+2, N+2 );
+    RHS.setZero( N+2, 2 );
     
-    // These computeDN and computeN are recursive functions
-    A(0,0) = computeDN(L,3,0,0,2); A(0,1) = computeDN(L,3,1,0,2); A(0,2) = computeDN(L,3,2,0,2); A(0,3) = computeDN(L,3,3,0,2);
-    for (int i = 1; i < dim - 2; i++){
-        A(i,i-1) = computeN(L, 3, i - 1, i - 1); 
-        A(i, i) = computeN(L, 3, i, i - 1);
-        A(i, i+1) = computeN(L, 3, i + 1, i - 1);
-        A(i, i+2) = computeN(L, 3, i + 2, i - 1);
+    // The right-hand-side is the interpolated points followed by zeros.
+    for( int i = 0; i < N; ++i )
+    {
+        A( i,i ) = 1./6.;
+        A( i,i+1 ) = 4./6.;
+        A( i,i+2 ) = 1./6.;
+        
+        RHS.row(i) = interpPoints.at(i);
     }
-    A(dim - 2, dim - 4) = computeN(L, 3, dim - 4, dim - 3);
-    A(dim - 2, dim - 3) = computeN(L, 3, dim - 3, dim - 3);
-    A(dim - 2, dim - 2) = computeN(L, 3, dim - 2, dim - 3);
-    A(dim - 2, dim - 1) = computeN(L, 3, dim - 1, dim - 3);
-    A(dim - 1, dim - 4) = computeDN(L, 3, dim - 4, dim - 3, 2); 
-    A(dim - 1, dim - 3) = computeDN(L, 3, dim - 3, dim - 3, 2);
-    A(dim - 1, dim - 2) = computeDN(L, 3, dim - 2, dim - 3, 2); 
-    A(dim - 1, dim - 1) = computeDN(L, 3, dim - 1, dim - 3, 2);
-    P(0,0) = 0; P(0,1) = 0;
-    for (int i = 1; i < totalPoints + 1; i++){
-        P(i,0) = interpPoints[i-1].x();
-        P(i,1) = interpPoints[i-1].y();
-    }
-    P(dim-1,0) = 0; P(dim-1,1) = 0;
-    C = A.fullPivLu().solve(P);
-    for (int i = 0; i < dim; i++){
-        result.push_back(Point(C(i,0), C(i,1)));
+    
+    // The last two rows are the natural (second derivative = 0) constraints.
+    A( N, 0 ) = 1;
+    A( N, 1 ) = -2;
+    A( N, 2 ) = 1;
+    
+    A( N+1, N+2-1 ) = 1;
+    A( N+1, N+2-2 ) = -2;
+    A( N+1, N+2-3 ) = 1;
+    
+    const MatrixXd C = A.fullPivLu().solve(RHS);
+    for( int i = 0; i < N+2; ++i )
+    {
+        result.push_back( C.row(i) );
     }
     return result;
 }
