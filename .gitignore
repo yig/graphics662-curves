@@ -1,3 +1,5 @@
 *.o
 *.nexe
 /pnacl
+/glibc
+/newlib
