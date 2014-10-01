@@ -125,7 +125,7 @@ public:
             // Restore the interpolated points after switching.
             if( m_curve )
             {
-                for( int i = 0; i < interpolated.size(); ++i ) m_curve->AddPoint( interpolated.at(i) );
+                for( unsigned int i = 0; i < interpolated.size(); ++i ) m_curve->AddPoint( interpolated.at(i) );
             }
         }
         else if( cmd == "GetData" )
