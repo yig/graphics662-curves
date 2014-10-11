@@ -44,6 +44,7 @@ canvas
 <div id="canvasholder">
 <form action="">
 <input type="button" id="clear" name="clear" value="Clear">
+<input type="button" id="test_data_long1" name="test_data_long1" value="Setup Test Spline">
 <label for="add"><input type="radio" name="mouse_mode" value="add" id="add" checked="checked">Add Point</label>
 <label for="move"><input type="radio" name="mouse_mode" value="move" id="move">Move Point</label>
 <select name="curveType" id="curveType">
@@ -376,6 +377,30 @@ $(document).ready( function() {
     }
     
     ///
+    /// Testing code.
+    ///
+    var kTestDataLong1 = [
+        [ 403, 74 ],
+        [ 242, 186 ],
+        [ 217, 321 ],
+        [ 323, 402 ],
+        [ 459, 335 ],
+        [ 430, 231 ],
+        [ 334, 231 ],
+        [ 270, 274 ],
+        ];
+    function setup_test_data( xys )
+    {
+        nacl_module.postMessage( "ClearAll" );
+        for( var i = 0; i < xys.length; ++i )
+        {
+            var xy = xys[i];
+            nacl_module.postMessage( "AddPoint " + xy[0] + " " + xy[1] );
+        }
+        nacl_module.postMessage( "GetData" );
+    }
+    
+    ///
     /// Initialization code.
     ///
     // Load the native client module.
@@ -429,6 +454,10 @@ $(document).ready( function() {
         $("#clear").click( function() {
             nacl_module.postMessage( "ClearAll" );
             nacl_module.postMessage( "GetData" );
+            } );
+        
+        $("#test_data_long1").click( function() {
+            setup_test_data( kTestDataLong1 );
             } );
         
         $("input[name=mouse_mode]").change( function() {
