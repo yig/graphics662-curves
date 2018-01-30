@@ -62,11 +62,7 @@ canvas
 <p id="tooltip"></p>
 </div>
 
-<div id="nacl_holder">
-<div id="nacl_status">
-    <p>Loading...</p>
-</div>
-</div>
+<script type="text/javascript" src="curvelib.js"></script>
 
 <script type='text/javascript'>
 "use strict";
@@ -75,7 +71,7 @@ $(document).ready( function() {
     ///
     /// Global variables.
     ///
-    var nacl_module = null;
+    var curvelib = null;
     var curveData = null;
     var canvas = null;
     var ctx = null;
@@ -84,25 +80,21 @@ $(document).ready( function() {
     ///
     /// Global functions.
     ///
-    function handleMessage( msg )
+    // Helper function to convert an embind-wrapped C++ vector to a JavaScript array.
+    function vector2array( vector ) {
+        var result = [];
+        for( var i = 0; i < vector.size(); ++i ) {
+            result[i] = vector.get(i);
+        }
+        return result;
+    }
+    function refresh_data()
     {
-        // alert( msg.data );
-        
-        var token = msg.data.split(' ',1);
-        if( 'alert' == token )
-        {
-            alert( msg.data.slice( 'alert'.length + 1 ) );
-        }
-        else if( 'log' == token )
-        {
-            console.log( msg.data.slice( 'log'.length + 1 ) );
-        }
-        else if( 'GetData' == token )
-        {
-            curveData = $.parseJSON( msg.data.slice( 'GetData'.length + 1 ) );
-            // console.log( curveData );
-            draw();
-        }
+        curveData = {
+            'controlPoints': vector2array( curvelib.GetControlPoints() ),
+            'curve': vector2array( curvelib.GetCurvePoints() )
+            };
+        draw();
     }
     
     var kPointRadius = 5.;
@@ -248,8 +240,8 @@ $(document).ready( function() {
     }
     // Create the need_redisplay function.
     // var need_redisplay = $.throttle( 16, draw );
-    // var GetDataThrottled = $.throttle( 16, function() { nacl_module.postMessage( "GetData" ); } );
-    var need_redisplay = $.throttle( 16, function() { nacl_module.postMessage( "GetData" ); } );
+    // var GetDataThrottled = $.throttle( 16, function() { refresh_data(); } );
+    var need_redisplay = $.throttle( 16, function() { refresh_data(); } );
     
     function event_xy_in_container( evt, container )
     {
@@ -291,7 +283,7 @@ $(document).ready( function() {
                 var xy = event_xy_in_container( evt, this );
                 if( picked !== null )
                 {
-                    nacl_module.postMessage( "SetControlPoint " + picked + " " + xy[0] + " " + xy[1] );
+                    curvelib.SetControlPoint( picked, xy );
                     need_redisplay();
                 }
             };
@@ -325,7 +317,7 @@ $(document).ready( function() {
                     return;
                 }
                 
-                nacl_module.postMessage( "AddPoint " + xy[0] + " " + xy[1] );
+                curvelib.AddPoint( xy );
                 need_redisplay();
             };
         
@@ -391,53 +383,32 @@ $(document).ready( function() {
         ];
     function setup_test_data( xys )
     {
-        nacl_module.postMessage( "ClearAll" );
+        curvelib.ClearAll();
         for( var i = 0; i < xys.length; ++i )
         {
             var xy = xys[i];
-            nacl_module.postMessage( "AddPoint " + xy[0] + " " + xy[1] );
+            curvelib.AddPoint( xy );
         }
-        nacl_module.postMessage( "GetData" );
+        refresh_data();
     }
     
     ///
     /// Initialization code.
     ///
-    // Load the native client module.
+    // Setup our global variables.
     {
-        var nacl_holder = $("#nacl_holder");
-        nacl_holder.get(0).addEventListener( 'load', moduleDidLoad, true );
-        // This doesn't work for some reason:
-        // nacl_holder.load( function() { alert( "module loaded!" ); } );
-        // So I don't trust it for "message", either:
-        // nacl_holder.on( "message", function() { alert( "message!" ); } );
-        nacl_holder.get(0).addEventListener( 'message', handleMessage, true );
-        nacl_holder.append( '<embed name="nacl_module" id="nacl_module" width=40 height=40 src="pnacl/Release/Curve.nmf" type="application/x-pnacl" />' );
-        
         canvas = $("#curve_canvas").get(0);
         ctx = $("#curve_canvas").get(0).getContext("2d");
         
-        // The rest of the setup code, setup_callbacks() will be called by
-        // moduleDidLoad.
-    }
-    function moduleDidLoad()
-    {
-        // alert( "module loaded!" );
-        $("#nacl_status").html( '<p>Loaded.</p>' );
-        
-        // THIS CAUSES THE EMBED TO STOP WORKING:
-        // $("#nacl_holder embed").hide();
-        
-        nacl_module = $("#nacl_module").get(0);
-        
+        curvelib = new Module.CurveManager();
         setup_callbacks();
     }
     function setup_callbacks()
     {
         $("#curveType").change( function() {
             var style = $("#curveType option:selected").val();
-            nacl_module.postMessage( "SetCurveType " + style );
-            nacl_module.postMessage( "GetData" );
+            curvelib.SetCurveType( style );
+            refresh_data();
             } );
         // Call the style-changed function to set the module's style to
         // what it is here in the HTML.
@@ -452,8 +423,8 @@ $(document).ready( function() {
         $("#show_control_points").change();
         
         $("#clear").click( function() {
-            nacl_module.postMessage( "ClearAll" );
-            nacl_module.postMessage( "GetData" );
+            curvelib.ClearAll();
+            refresh_data();
             } );
         
         $("#test_data_long1").click( function() {

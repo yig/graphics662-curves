@@ -113,6 +113,7 @@ EMSCRIPTEN_BINDINGS(Curve) {
     register_vector<Curve::CurveManager::CurveManagerPoint>("VectorPoint");
     
     class_<Curve::CurveManager>("CurveManager")
+        .constructor()
         .function("AddPoint", &Curve::CurveManager::AddPoint)
         .function("SetControlPoint", &Curve::CurveManager::SetControlPoint)
         .function("ClearAll", &Curve::CurveManager::ClearAll)

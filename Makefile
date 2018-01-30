@@ -1,13 +1,14 @@
-TARGET = index.html
+TARGET = curvelib.html
 
-CXX = emcc
-
-CFLAGS = -Wall -Werror --bind
 OBJS = CurveBridge.o Curve.o CurveFunctions.o
-SOURCES = $(subst .o,.cpp,$(SOURCES))
+SOURCES = $(subst .o,.cpp,$(OBJS))
 DEPS = Curve.h CurveFunctions.h jsassert.h
 
-%.o: %.c $(DEPS)
+CXX = emcc
+CFLAGS=-Wall -Werror --bind -I.
+LDFLAGS=--bind
+
+%.o: %.cpp $(DEPS)
 	$(CXX) $(CFLAGS) $(CXXFLAGS) -c $< -o $@
 
 all: $(TARGET)
