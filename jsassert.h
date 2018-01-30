@@ -25,16 +25,9 @@ inline void jsError( const std::string& msg ) {
     #define jsAssert( cond ) \
     do { \
         if( !(cond) ) { \
-            jsAlert( std::string("assert ") + std::string(#cond) + std::string(" failed at ") + std::string(__FILE__) + std::string(":") + toString(__LINE__) ); \
+            jsAlert( std::string("assert ") + std::string(#cond) + std::string(" failed at ") + std::string(__FILE__) + std::string(":") + std::to_string(__LINE__) ); \
         } \
     } while(0)
 #endif
-
-template< typename T > std::string toString( const T& t )
-{
-    std::ostringstream sstr;
-    sstr << t;
-    return sstr.str();
-}
 
 #endif /* __jsassert_h__ */
