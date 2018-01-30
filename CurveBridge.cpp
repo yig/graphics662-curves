@@ -1,50 +1,12 @@
-#include "ppapi/cpp/instance.h"
-#include "ppapi/cpp/module.h"
-#include "ppapi/cpp/var.h"
-
 #include <sstream>
 #include <iomanip>
 
 #include "Curve.h"
+#include "jsassert.h"
 
-// Global functions for debugging.
-// NOTE: You can pass either a const char* or an std::string.
-namespace { pp::Instance* anyInstance; }
-void jsAlert( const std::string& msg )
-{
-    if( anyInstance )
-    {
-        anyInstance->PostMessage( pp::Var( std::string( "alert " ) + msg ) );
-    }
-}
-void jsLog( const std::string& msg )
-{
-    if( anyInstance )
-    {
-        anyInstance->PostMessage( pp::Var( std::string( "log " ) + msg ) );
-    }
-}
-
-namespace
-{
-
-std::ostream& operator<<( std::ostream& out, const std::vector< Curve::Point >& pts )
-{
-    out << "[ ";
-    for( unsigned int i = 0; i < pts.size(); ++i )
-    {
-        if( i > 0 ) out << ", ";
-        
-        out << "[ " << pts.at(i).x() << ", " << pts.at(i).y() << " ]";
-    }
-    out << " ]";
-    
-    return out;
-}
-std::istream& operator>>( std::istream& in, Curve::Point& pt )
-{
-    return in >> pt.x() >> pt.y();
-}
+#include <emscripten.h>
+#include <emscripten/bind.h>
+#include <memory> // std::unique_ptr
 
 // Returns a new Curve::InterpolatingCurve* based on the string.
 // If no such class is known, returns 0.
@@ -62,118 +24,101 @@ Curve::InterpolatingCurve* NewCurveFactory( const std::string& curveType )
     }
 }
 
-class CurveInstance : public pp::Instance
+namespace Curve
+{
+
+class CurveManager
 {
 public:
-    explicit CurveInstance( PP_Instance instance ) : pp::Instance( instance ), m_curve(0)
+    struct CurveManagerPoint
     {
-        // For debugging:
-        anyInstance = this;
-    }
-    virtual ~CurveInstance() { delete m_curve; }
+        CurveManagerPoint() : x(0), y(0) {}
+        CurveManagerPoint( real_t a_x, real_t a_y ) : x( a_x ), y( a_y ) {}
+        
+        real_t x;
+        real_t y;
+    };
     
-    void HandleMessage( const pp::Var& var_message )
+    void AddPoint( CurveManagerPoint p )
     {
-        // This slows everything down, but is useful for debugging:
-        jsLog( std::string( "HandleMessage: " ) + var_message.AsString() );
+        if( m_curve ) m_curve->AddPoint( Curve::Point( p.x, p.y ) );
+    }
+    void SetControlPoint( int i, CurveManagerPoint p )
+    {
+        if( m_curve ) m_curve->SetControlPoint( i, Curve::Point( p.x, p.y ) );
+    }
+    void ClearAll()
+    {
+        m_curve.reset( NewCurveFactory( m_curveType ) );
+    }
+    void SetCurveType( const std::string& curveType )
+    {
+        m_curveType = curveType;
         
-        // We only expect string messages.
-        if( !var_message.is_string() )
+        // Save the interpolated points before switching.
+        std::vector< Curve::Point > interpolated;
+        if( m_curve )
         {
-            return;
+            interpolated = m_curve->GetInterpolatedPoints();
         }
         
-        // Turn the message into an istream for processing.
-        std::istringstream msgstream( var_message.AsString() );
+        // Switch to the new curve type.
+        m_curve.reset( NewCurveFactory( m_curveType ) );
         
-        std::string cmd;
-        msgstream >> cmd;
-        
-        if( cmd == "AddPoint" )
+        // Restore the interpolated points after switching.
+        if( m_curve )
         {
-            Curve::Point p;
-            msgstream >> p;
-            if( m_curve ) m_curve->AddPoint( p );
+            for( unsigned int i = 0; i < interpolated.size(); ++i ) m_curve->AddPoint( interpolated.at(i) );
         }
-        else if( cmd == "SetControlPoint" )
-        {
-            int i;
-            Curve::Point p;
-            msgstream >> i >> p;
-            if( m_curve ) m_curve->SetControlPoint( i, p );
+    }
+    std::vector< CurveManagerPoint > GetControlPoints()
+    {
+        std::vector< CurveManagerPoint > result;
+        if( m_curve ) {
+            std::vector< Curve::Point > points = m_curve->GetControlPoints();
+            result.clear();
+            result.reserve( points.size() );
+            for( const auto& p : points ) { result.emplace_back( p(0), p(1) ); }
         }
-        else if( cmd == "ClearAll" )
-        {
-            delete m_curve;
-            m_curve = NewCurveFactory( m_curveType );
+        return result;
+    }
+    std::vector< CurveManagerPoint > GetCurvePoints()
+    {
+        std::vector< CurveManagerPoint > result;
+        if( m_curve ) {
+            std::vector< Curve::Point > points = m_curve->GetCurvePoints();
+            result.clear();
+            result.reserve( points.size() );
+            for( const auto& p : points ) { result.emplace_back( p(0), p(1) ); }
         }
-        else if( cmd == "SetCurveType" )
-        {
-            msgstream >> m_curveType;
-            
-            // Save the interpolated points before switching.
-            std::vector< Curve::Point > interpolated;
-            if( m_curve )
-            {
-                interpolated = m_curve->GetInterpolatedPoints();
-            }
-            
-            // Switch to the new curve type.
-            delete m_curve;
-            m_curve = NewCurveFactory( m_curveType );
-            
-            // Restore the interpolated points after switching.
-            if( m_curve )
-            {
-                for( unsigned int i = 0; i < interpolated.size(); ++i ) m_curve->AddPoint( interpolated.at(i) );
-            }
-        }
-        else if( cmd == "GetData" )
-        {
-            std::vector< Curve::Point > controlPoints, curvePoints;
-            
-            if( m_curve )
-            {
-                controlPoints = m_curve->GetControlPoints();
-                curvePoints = m_curve->GetCurvePoints();
-            }
-            
-            // Package up some JSON and post it.
-            std::ostringstream packet;
-            // Set precision to 24 to preserve double-precision accuracy.
-            packet << std::setprecision( 24 ) << std::boolalpha;
-            packet << "{ \"controlPoints\": " << controlPoints;
-            packet << ", \"curve\": " << curvePoints;
-            packet << "}";
-            
-            PostMessage( pp::Var( std::string("GetData ") + packet.str() ) );
-        }
-        else
-        {
-            jsAlert( std::string( "Unknown command: " ) + var_message.AsString() );
-        }
+        return result;
     }
     
 private:
     std::string m_curveType;
-    Curve::InterpolatingCurve* m_curve;
-}; // ~CurveInstance
+    std::unique_ptr< Curve::InterpolatingCurve > m_curve;
+}; // ~CurveManager
 
-class CurveModule : public pp::Module
-{
-public:
-    pp::Instance* CreateInstance( PP_Instance instance )
-    {
-        return new CurveInstance( instance );
-    }
-}; // ~CurveModule
-
-} // ~anonymous
-
-namespace pp
-{
-Module* CreateModule()
-{
-    return new CurveModule();
 }
-} // ~pp
+
+
+EMSCRIPTEN_BINDINGS(Curve) {
+    using namespace emscripten;
+    
+    value_array<Curve::CurveManager::CurveManagerPoint>("Point")
+        .element(&Curve::CurveManager::CurveManagerPoint::x)
+        .element(&Curve::CurveManager::CurveManagerPoint::y)
+        ;
+    
+    register_vector<Curve::CurveManager::CurveManagerPoint>("VectorPoint");
+    
+    class_<Curve::CurveManager>("CurveManager")
+        .constructor()
+        .function("AddPoint", &Curve::CurveManager::AddPoint)
+        .function("SetControlPoint", &Curve::CurveManager::SetControlPoint)
+        .function("ClearAll", &Curve::CurveManager::ClearAll)
+        .function("SetCurveType", &Curve::CurveManager::SetCurveType)
+        .function("GetControlPoints", &Curve::CurveManager::GetControlPoints)
+        .function("GetCurvePoints", &Curve::CurveManager::GetCurvePoints)
+        ;
+}

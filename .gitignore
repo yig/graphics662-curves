@@ -1,5 +1,4 @@
 *.o
-*.nexe
-/pnacl
-/glibc
-/newlib
+.depend
+curvelib.html
+curvelib.js

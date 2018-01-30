@@ -10,8 +10,10 @@ using std::vector;
 
 // Call these to raise a dialog box or log to the javascript console for debugging.
 // NOTE: You can pass either a const char* or an std::string.
-extern void jsAlert( const std::string& msg );
-extern void jsLog( const std::string& msg );
+// void jsAlert( const std::string& msg );
+// void jsLog( const std::string& msg );
+// void jsWarn( const std::string& msg );
+// void jsError( const std::string& msg );
 
 namespace
 {
