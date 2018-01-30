@@ -5,8 +5,8 @@ SOURCES = $(subst .o,.cpp,$(OBJS))
 DEPS = Curve.h CurveFunctions.h jsassert.h
 
 CXX = emcc
-CFLAGS=-Wall -Werror --bind -I.
-LDFLAGS=--bind
+CFLAGS=-Wall -Werror --bind -I. -O2 --memory-init-file 0
+LDFLAGS=
 
 %.o: %.cpp $(DEPS)
 	$(CXX) $(CFLAGS) $(CXXFLAGS) -c $< -o $@
@@ -14,13 +14,13 @@ LDFLAGS=--bind
 all: $(TARGET)
 
 $(TARGET): $(OBJS)
-	$(CXX) $(LDFLAGS) -o $@ $(OBJS)
+	$(CXX) $(CFLAGS) $(CXXFLAGS) $(LDFLAGS) -o $@ $(OBJS)
 
 depend: .depend
 
 .depend: $(SOURCES)
 	$(RM) ./.depend
-	$(CXX) $(CPPFLAGS) -MM $^ >> ./.depend
+	$(CXX) $(CFLAGS) $(CXXFLAGS) $(CPPFLAGS) -MM $^ >> ./.depend
 
 clean:
 	$(RM) $(OBJS)
