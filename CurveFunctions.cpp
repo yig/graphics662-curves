@@ -20,6 +20,14 @@ using Eigen::Vector4d;
 // void jsWarn( const std::string& msg );
 // void jsError( const std::string& msg );
 
+namespace
+{
+// For debugging, this function will return a string given a Point.
+std::string point2string( const Point& p ) {
+    return "( " + std::to_string(p(0)) + ", " + std::to_string(p(1)) + " )";
+}
+}
+
 namespace Curve
 {
 
