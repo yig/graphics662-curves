@@ -302,6 +302,21 @@ std::vector< Point > EvaluateCatmullRomSpline( const std::vector< Point >& contr
 Point EvaluateCatmullRomCurve( const Point& p0, const Point& p1, const Point& p2, const Point& p3, const real_t t, const real_t alpha )
 {
     // ADD YOUR CODE HERE
+    
+    // Implemented with a matrix:
+    Matrix4d M;
+    M << -1, 3, -3, 1,
+        2, -5, 4, -1,
+        -1, 0, 1, 0,
+        0, 2, 0, 0;
+    
+    Vector4d power( t*t*t, t*t, t, 1 );
+    
+    Vector4d w = ( power.transpose() * M ).transpose();
+    
+    return alpha*( w(0)*p0 + w(1)*p1 + w(2)*p2 + w(3)*p3 );
+    
+    // Implemented via Cubic Bezier conversion:
     const real_t d1 = (p1-p0).norm();
     const real_t d2 = (p2-p1).norm();
     const real_t d3 = (p3-p2).norm();
