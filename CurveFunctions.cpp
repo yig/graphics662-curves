@@ -23,7 +23,7 @@ using Eigen::Vector4d;
 namespace
 {
 // For debugging, this function will return a string given a Point.
-std::string point2string( const Point& p ) {
+std::string point2string( const Curve::Point& p ) {
     return "( " + std::to_string(p(0)) + ", " + std::to_string(p(1)) + " )";
 }
 }

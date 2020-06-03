@@ -15,7 +15,7 @@ If you have the program `make` installed (macOS and other unix users likely will
 
 Otherwise, the following line will compile all the code:
 
-    emcc -Wall -Werror --bind -I. -O2 --memory-init-file 0 -o curvelib.html CurveBridge.cpp Curve.cpp CurveFunctions.cpp
+    emcc -Wall --bind -I. -O2 --memory-init-file 0 -o curvelib.html CurveBridge.cpp Curve.cpp CurveFunctions.cpp
 
 ## Writing
 
