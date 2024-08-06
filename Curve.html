@@ -67,7 +67,8 @@ canvas
 <script type='text/javascript'>
 "use strict";
 
-$(document).ready( function() {
+var Module = {
+onRuntimeInitialized: function() {
     ///
     /// Global variables.
     ///
@@ -401,6 +402,7 @@ $(document).ready( function() {
         ctx = $("#curve_canvas").get(0).getContext("2d");
         
         curvelib = new Module.CurveManager();
+
         setup_callbacks();
     }
     function setup_callbacks()
@@ -436,7 +438,7 @@ $(document).ready( function() {
             } );
         set_mouse_mode( $("input[name=mouse_mode]:checked").val() );
     }
-} );
+}};
 </script>
 
 </body>
