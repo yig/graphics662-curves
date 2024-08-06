@@ -8,7 +8,7 @@ SOURCES = $(subst .o,.cpp,$(OBJS))
 DEPS = Curve.h CurveFunctions.h jsassert.h
 
 CXX = emcc
-CFLAGS=-Wall -Ieigen3 -O2
+CFLAGS=-Wall -Ieigen3 -O2 -std=c++20
 LDFLAGS=-lembind
 
 %.o: %.cpp $(DEPS)

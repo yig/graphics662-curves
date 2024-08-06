@@ -1,5 +1,4 @@
-#ifndef __Curve_h__
-#define __Curve_h__
+#pragma once
 
 #include "CurveFunctions.h"
 
@@ -126,5 +125,3 @@ protected:
 };
 
 }
-
-#endif /* __Curve_h__ */

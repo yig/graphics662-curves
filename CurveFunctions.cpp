@@ -40,9 +40,9 @@ namespace
 // Evaluate a cubic Bezier curve at location 't'.
 Point EvaluateCubicBezierCurve( const Point& p0, const Point& p1, const Point& p2, const Point& p3, const real_t t, EvaluateCubicBezierCurveApproach approach )
 {
-    if( BernsteinApproach == approach ) return EvaluateCubicBezierCurveBernstein( p0, p1, p2, p3, t );
-    else if( MatrixApproach == approach ) return EvaluateCubicBezierCurveMatrix( p0, p1, p2, p3, t );
-    else if( CasteljauApproach == approach ) return EvaluateCubicBezierCurveCasteljau( p0, p1, p2, p3, t );
+    if( EvaluateCubicBezierCurveApproach::BernsteinApproach == approach ) return EvaluateCubicBezierCurveBernstein( p0, p1, p2, p3, t );
+    else if( EvaluateCubicBezierCurveApproach::MatrixApproach == approach ) return EvaluateCubicBezierCurveMatrix( p0, p1, p2, p3, t );
+    else if( EvaluateCubicBezierCurveApproach::CasteljauApproach == approach ) return EvaluateCubicBezierCurveCasteljau( p0, p1, p2, p3, t );
     else {
         assert( !"Unknown EvaluateCubicBezierCurveApproach" );
         return Point(-31337,-31337);

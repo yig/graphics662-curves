@@ -10,17 +10,19 @@
 
 // Returns a new Curve::InterpolatingCurve* based on the string.
 // If no such class is known, returns 0.
-Curve::InterpolatingCurve* NewCurveFactory( const std::string& curveType )
+std::unique_ptr< Curve::InterpolatingCurve > NewCurveFactory( const std::string& curveType )
 {
-    if( curveType == "CubicBezierBernstein" ) return new Curve::CubicBezierCurve( Curve::BernsteinApproach );
-    else if( curveType == "CubicBezierCasteljau" ) return new Curve::CubicBezierCurve( Curve::CasteljauApproach );
-    else if( curveType == "CubicBezierMatrix" ) return new Curve::CubicBezierCurve( Curve::MatrixApproach );
-    else if( curveType == "CubicHermite" ) return new Curve::CubicHermiteCurve();
-    else if( curveType == "CatmullRom" ) return new Curve::CatmullRomCurve(.5);
-    else if( curveType == "CubicBSpline" ) return new Curve::CubicBSplineCurve();
+    using enum Curve::EvaluateCubicBezierCurveApproach;
+    
+    if( curveType == "CubicBezierBernstein" ) return std::make_unique<Curve::CubicBezierCurve>( BernsteinApproach );
+    else if( curveType == "CubicBezierCasteljau" ) return std::make_unique<Curve::CubicBezierCurve>( CasteljauApproach );
+    else if( curveType == "CubicBezierMatrix" ) return std::make_unique<Curve::CubicBezierCurve>( MatrixApproach );
+    else if( curveType == "CubicHermite" ) return std::make_unique<Curve::CubicHermiteCurve>();
+    else if( curveType == "CatmullRom" ) return std::make_unique<Curve::CatmullRomCurve>(.5);
+    else if( curveType == "CubicBSpline" ) return std::make_unique<Curve::CubicBSplineCurve>();
     else {
         jsAlert( "Unknown curve type: " + curveType );
-        return 0;
+        return nullptr;
     }
 }
 
@@ -49,7 +51,7 @@ public:
     }
     void ClearAll()
     {
-        m_curve.reset( NewCurveFactory( m_curveType ) );
+        m_curve = NewCurveFactory( m_curveType );
     }
     void SetCurveType( const std::string& curveType )
     {
@@ -63,7 +65,7 @@ public:
         }
         
         // Switch to the new curve type.
-        m_curve.reset( NewCurveFactory( m_curveType ) );
+        m_curve = NewCurveFactory( m_curveType );
         
         // Restore the interpolated points after switching.
         if( m_curve )

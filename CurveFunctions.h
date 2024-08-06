@@ -1,5 +1,4 @@
-#ifndef __CurveFunctions_h__
-#define __CurveFunctions_h__
+#pragma once
 
 #include <vector>
 #include <Eigen/Core>
@@ -15,7 +14,7 @@ typedef double real_t;
 //     on_curve ( off_curve off_curve on_curve )+
 // at positive integer 'samplesPerCurve' locations along each curve.
 // Returns the sampled points.
-enum EvaluateCubicBezierCurveApproach
+enum class EvaluateCubicBezierCurveApproach
 {
     BernsteinApproach,
     MatrixApproach,
@@ -70,5 +69,3 @@ std::vector< Point > ComputeBSplineFromInterpolatingPoints( const std::vector< P
 std::vector< Point > ComputeInterpolatingPointsFromBSpline( const std::vector< Point >& controlPoints );
 
 }
-
-#endif /* __CurveFunctions_h__ */
