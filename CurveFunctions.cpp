@@ -40,9 +40,9 @@ namespace
 // Evaluate a cubic Bezier curve at location 't'.
 Point EvaluateCubicBezierCurve( const Point& p0, const Point& p1, const Point& p2, const Point& p3, const real_t t, EvaluateCubicBezierCurveApproach approach )
 {
-    if( EvaluateCubicBezierCurveApproach::BernsteinApproach == approach ) return EvaluateCubicBezierCurveBernstein( p0, p1, p2, p3, t );
-    else if( EvaluateCubicBezierCurveApproach::MatrixApproach == approach ) return EvaluateCubicBezierCurveMatrix( p0, p1, p2, p3, t );
-    else if( EvaluateCubicBezierCurveApproach::CasteljauApproach == approach ) return EvaluateCubicBezierCurveCasteljau( p0, p1, p2, p3, t );
+    if( EvaluateCubicBezierCurveApproach::Bernstein == approach ) return EvaluateCubicBezierCurveBernstein( p0, p1, p2, p3, t );
+    else if( EvaluateCubicBezierCurveApproach::Matrix == approach ) return EvaluateCubicBezierCurveMatrix( p0, p1, p2, p3, t );
+    else if( EvaluateCubicBezierCurveApproach::Casteljau == approach ) return EvaluateCubicBezierCurveCasteljau( p0, p1, p2, p3, t );
     else {
         assert( !"Unknown EvaluateCubicBezierCurveApproach" );
         return Point(-31337,-31337);
@@ -114,14 +114,14 @@ Point EvaluateCubicBezierCurveCasteljau( const Point& p0, const Point& p1, const
 //     on_curve ( off_curve off_curve on_curve )+
 // at positive integer 'samplesPerCurve' locations along each curve.
 // Returns the sampled points.
-std::vector< Point > EvaluateCubicBezierSpline( const std::vector< Point >& controlPoints, const int samplesPerCurve, EvaluateCubicBezierCurveApproach approach )
+Points EvaluateCubicBezierSpline( const Points& controlPoints, const int samplesPerCurve, EvaluateCubicBezierCurveApproach approach )
 {
     assert( controlPoints.size() >= 4 );
     assert( samplesPerCurve > 0 );
     
     // ADD YOUR CODE HERE
-    const std::vector< Point >& C = controlPoints;
-    std::vector< Point > result;
+    const Points& C = controlPoints;
+    Points result;
     // Reserve some space.
     result.reserve( samplesPerCurve*(C.size()-1)/3 + 1 );
     // Evaluate each curve.
@@ -157,14 +157,14 @@ Point EvaluateCubicHermiteCurve( const Point& p0, const Point& dp0, const Point&
 //     p0 derivative_at_p0 ( p1 derivative_at_p1 )+
 // at positive integer 'samplesPerCurve' locations along each curve.
 // Upon return, 'curvePointsOut' is cleared and replaced with the sampled points.
-std::vector< Point > EvaluateCubicHermiteSpline( const std::vector< Point >& controlPoints, const int samplesPerCurve )
+Points EvaluateCubicHermiteSpline( const Points& controlPoints, const int samplesPerCurve )
 {
     assert( controlPoints.size() >= 4 );
     assert( samplesPerCurve > 0 );
     
     // ADD YOUR CODE HERE
-    const std::vector< Point >& C = controlPoints;
-    std::vector< Point > result;
+    const Points& C = controlPoints;
+    Points result;
     // Reserve some space.
     result.reserve( samplesPerCurve*( C.size()/2 - 1 ) + 1 );
     // Evaluate each curve.
@@ -204,7 +204,7 @@ std::vector< Point > EvaluateCubicHermiteSpline( const std::vector< Point >& con
 //  c = A.fullPivLu().solve(p);
 //
 //  The result will be stored in c as follows: c(0,0) = 1.0; c(1,0) = 2.0; c(3,0) = 3.0, which satisfies Ac = p.
-void CalculateHermiteSplineDerivativesForC2Continuity( std::vector< Point >& controlPoints )
+void CalculateHermiteSplineDerivativesForC2Continuity( Points& controlPoints )
 {
     // Do nothing if there aren't enough control points.
     if( controlPoints.size() < 4 ) return;
@@ -275,13 +275,13 @@ void CalculateHermiteSplineDerivativesForC2Continuity( std::vector< Point >& con
 //     p0 p1 p2 ( p3 )+
 // at positive integer 'samplesPerCurve' locations along each curve.
 // Upon return, 'curvePointsOut' is cleared and replaced with the sampled points.
-std::vector< Point > EvaluateCatmullRomSpline( const std::vector< Point >& controlPoints, const int samplesPerCurve, const real_t alpha )
+Points EvaluateCatmullRomSpline( const Points& controlPoints, const int samplesPerCurve, const real_t alpha )
 {
     assert( controlPoints.size() >= 4 );
     assert( samplesPerCurve > 0 );
     
     // ADD YOUR CODE HERE
-    std::vector< Point > C;
+    Points C;
     // p0 p0 p1 p2 ... pN pN
     C.push_back( controlPoints.front() );
     C.insert( C.end(), controlPoints.begin(), controlPoints.end() );
@@ -290,7 +290,7 @@ std::vector< Point > EvaluateCatmullRomSpline( const std::vector< Point >& contr
     C[0] = C[1] + (C[1] - C[2]);
     C[C.size()-1] = C[C.size()-2] + (C[C.size()-2] - C[C.size()-3]);
     
-    std::vector< Point > result;
+    Points result;
     // Reserve some space.
     result.reserve( samplesPerCurve*(C.size()-3) + 1 );
     // Evaluate each curve.
@@ -354,14 +354,14 @@ namespace
 //     p0 p1 p2 ( p3 )+
 // at positive integer 'samplesPerCurve' locations along each curve.
 // Upon return, 'curvePointsOut' is cleared and replaced with the sampled points.
-std::vector< Point > EvaluateCubicBSpline( const std::vector< Point >& controlPoints, const int samplesPerCurve )
+Points EvaluateCubicBSpline( const Points& controlPoints, const int samplesPerCurve )
 {
     assert( controlPoints.size() >= 4 );
     assert( samplesPerCurve > 0 );
     
     // ADD YOUR CODE HERE
-    const std::vector< Point >& C = controlPoints;
-    std::vector< Point > result;
+    const Points& C = controlPoints;
+    Points result;
     // Reserve some space.
     result.reserve( samplesPerCurve*(C.size()-3) + 1 );
     // Evaluate each curve.
@@ -394,12 +394,12 @@ Point EvaluateCubicBSplineCurve( const Point& p0, const Point& p1, const Point& 
 }
 
 // Compute cubic BSpline control points that interpolate the given points.
-std::vector< Point > ComputeBSplineFromInterpolatingPoints( const std::vector< Point >& interpPoints )
+Points ComputeBSplineFromInterpolatingPoints( const Points& interpPoints )
 {
     assert( interpPoints.size() >= 2 );
     
     // ADD YOUR CODE HERE
-    std::vector< Point > result;
+    Points result;
     
     // Prepare data
     const int N = interpPoints.size();
@@ -437,12 +437,12 @@ std::vector< Point > ComputeBSplineFromInterpolatingPoints( const std::vector< P
 }
 // Given a sequence of cubic BSpline control points, returns the interpolating points
 // that could have been used to create them via ComputeBSplineFromInterpolatingPoints().
-std::vector< Point > ComputeInterpolatingPointsFromBSpline( const std::vector< Point >& controlPoints )
+Points ComputeInterpolatingPointsFromBSpline( const Points& controlPoints )
 {
     assert( controlPoints.size() >= 4 );
-    const std::vector< Point >& C = controlPoints;
+    const Points& C = controlPoints;
     
-    std::vector< Point > result;
+    Points result;
     // The interpolated points are at the start and end of each cubic B-Spline
     // (they are continuous).
     // So let's just sample the t=1 point on every cubic BSpline,

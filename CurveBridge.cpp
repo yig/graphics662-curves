@@ -14,9 +14,9 @@ std::unique_ptr< Curve::InterpolatingCurve > NewCurveFactory( const std::string&
 {
     using enum Curve::EvaluateCubicBezierCurveApproach;
     
-    if( curveType == "CubicBezierBernstein" ) return std::make_unique<Curve::CubicBezierCurve>( BernsteinApproach );
-    else if( curveType == "CubicBezierCasteljau" ) return std::make_unique<Curve::CubicBezierCurve>( CasteljauApproach );
-    else if( curveType == "CubicBezierMatrix" ) return std::make_unique<Curve::CubicBezierCurve>( MatrixApproach );
+    if( curveType == "CubicBezierBernstein" ) return std::make_unique<Curve::CubicBezierCurve>( Bernstein );
+    else if( curveType == "CubicBezierCasteljau" ) return std::make_unique<Curve::CubicBezierCurve>( Casteljau );
+    else if( curveType == "CubicBezierMatrix" ) return std::make_unique<Curve::CubicBezierCurve>( Matrix );
     else if( curveType == "CubicHermite" ) return std::make_unique<Curve::CubicHermiteCurve>();
     else if( curveType == "CatmullRom" ) return std::make_unique<Curve::CatmullRomCurve>(.5);
     else if( curveType == "CubicBSpline" ) return std::make_unique<Curve::CubicBSplineCurve>();

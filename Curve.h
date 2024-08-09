@@ -20,17 +20,17 @@ public:
     // Returns the interpolated points. These points will be the same
     // as those previously passed to AddPoint() if SetControlPoint()
     // has never been called; otherwise, they may be modified.
-    virtual std::vector< Point > GetInterpolatedPoints() const = 0;
+    virtual Points GetInterpolatedPoints() const = 0;
     
     // Get the control points for this spline.
     // Note that the format of the control points can vary (such as Hermite splines storing derivatives).
-    const std::vector< Point >& GetControlPoints() const;
+    const Points& GetControlPoints() const;
     
     // Sets the control point at index 'i' to 'p'.
     void SetControlPoint( int i, const Point& p );
     
     // Returns points sampling the spline curve defined by the control points.
-    const std::vector< Point >& GetCurvePoints() const;
+    const Points& GetCurvePoints() const;
 
 protected:
     /// For subclasses to override.
@@ -49,10 +49,10 @@ protected:
     // Call this to regenerate the curve points.
     void NeedEvaluate();
     
-    std::vector< Point > m_controlPoints;
+    Points m_controlPoints;
     // This is mutable because it is a cache and is created as-needed
     // by GetCurvePoints().
-    mutable std::vector< Point > m_curvePoints;
+    mutable Points m_curvePoints;
 };
 
 // A class implementing everything for Bezier curves except Evaluate();
@@ -63,7 +63,7 @@ public:
     CubicBezierCurve( EvaluateCubicBezierCurveApproach approach ) : m_approach( approach ) {}
     void SetEvaluateApproach( EvaluateCubicBezierCurveApproach approach );
     
-    std::vector< Point > GetInterpolatedPoints() const;
+    Points GetInterpolatedPoints() const;
     
 protected:
     // When adding a point, add new non-interpolated control points.
@@ -82,7 +82,7 @@ private:
 class CubicHermiteCurve : public InterpolatingCurve
 {
 public:
-    std::vector< Point > GetInterpolatedPoints() const;
+    Points GetInterpolatedPoints() const;
     
 protected:
     // When adding a point, add initial derivatives, too.
@@ -99,7 +99,7 @@ class CatmullRomCurve : public InterpolatingCurve
 public:
     CatmullRomCurve( real_t alpha ) : m_alpha( alpha ) {}
     
-    std::vector< Point > GetInterpolatedPoints() const;
+    Points GetInterpolatedPoints() const;
 
 protected:
     // When adding a point, add initial derivatives, too.
@@ -115,7 +115,7 @@ private:
 class CubicBSplineCurve : public InterpolatingCurve
 {
 public:
-    std::vector< Point > GetInterpolatedPoints() const;
+    Points GetInterpolatedPoints() const;
     
 protected:
     // When adding a point, add initial derivatives, too.
