@@ -87,7 +87,7 @@ When done, upload a zip of your entire directory. Do not include your build dire
 
 2. **(40 points) Hermite splines**
 
-    1. (10 points) Same as 1.1 above, except for a cubic Hermite spline with an array of 2D control points of the form $[ \mathbf{p}_0 = [x_0, y_0]^T, \frac{d\mathbf{p}_0}{dt} = [\frac{dx_0}{dt}, \frac{dy_0}{dt}]^T, \mathbf{p}1 = [x_1, y_1]^T, \frac{d\mathbf{p}_1}{dt} = [\frac{dx_1}{dt}, \frac{dy_1}{dt}]^T, … ]$. Each cubic Hermite curve is defined by four control points: $\mathbf{p}_i, \frac{d\mathbf{p}_i}{dt}, \mathbf{p}_{i+1}, \frac{d\mathbf{p}_{i+1}}{dt}$. The function you must fill in is `EvaluateCubicHermiteSpline()`; call `EvaluateCubicHermiteCurve()` with the appropriate control points and $t$ value.
+    1. (10 points) Same as 1.1 above, except for a cubic Hermite spline with an array of 2D control points of the form $$[ \mathbf{p}_0 = [x_0, y_0]^T, \frac{d\mathbf{p}_0}{dt} = [\frac{dx_0}{dt}, \frac{dy_0}{dt}]^T, \mathbf{p}1 = [x_1, y_1]^T, \frac{d\mathbf{p}_1}{dt} = [\frac{dx_1}{dt}, \frac{dy_1}{dt}]^T, … ].$$ Each cubic Hermite curve is defined by four control points: $$\mathbf{p}_i, \frac{d\mathbf{p}_i}{dt}, \mathbf{p}_{i+1}, \frac{d\mathbf{p}_{i+1}}{dt}.$$ The function you must fill in is `EvaluateCubicHermiteSpline()`; call `EvaluateCubicHermiteCurve()` with the appropriate control points and $t$ value.
 
     2. (10 points) Evaluate a cubic Hermite curve using any technique you like; fill in `EvaluateCubicHermiteCurve()`.
 
@@ -97,15 +97,15 @@ When done, upload a zip of your entire directory. Do not include your build dire
 
 3. **(20 points) Catmull-Rom splines**
 
-    1. (10 points) Same as 1.1 above, except for a centripetal Catmull-Rom spline with an array of 2D control points of the form $[ \mathbf{p}_0 = [x_0, y_0]^T, \mathbf{p}_1 = [x_1, y_1]^T, … ]$. Each piece of the Catmull-Rom curve is defined by four control points: $\mathbf{p}_i, \mathbf{p}_{i+1}, \mathbf{p}_{i+2}, \mathbf{p}_{i+3}$. The function you must fill in is `EvaluateCatmullRomSpline()`; call `EvaluateCatmullRomCurve()` with the appropriate control points, $t$ value, and the given *alpha* value (which will be set to .5 for centripetal).  
-    **Note:** To make your Catmull-Rom spline interpolate the first and last control points, also evaluate, as the first piece, $2\mathbf{p}_0 -\mathbf{p}_1, \mathbf{p}_0, \mathbf{p}_1, \mathbf{p}_2$, and, as the last piece, $\mathbf{p}_{n-2}, \mathbf{p}_{n-1}, \mathbf{p}_n, 2\mathbf{p}_n-\mathbf{p}_{n-1}$.  
+    1. (10 points) Same as 1.1 above, except for a centripetal Catmull-Rom spline with an array of 2D control points of the form $$[ \mathbf{p}_0 = [x_0, y_0]^T, \mathbf{p}_1 = [x_1, y_1]^T, … ].$$ Each piece of the Catmull-Rom curve is defined by four control points: $$\mathbf{p}_i, \mathbf{p}_{i+1}, \mathbf{p}_{i+2}, \mathbf{p}_{i+3}.$$ The function you must fill in is `EvaluateCatmullRomSpline()`; call `EvaluateCatmullRomCurve()` with the appropriate control points, $t$ value, and the given *alpha* value (which will be set to .5 for centripetal).  
+    **Note:** To make your Catmull-Rom spline interpolate the first and last control points, also evaluate, as the first piece, $$2\mathbf{p}_0 -\mathbf{p}_1, \mathbf{p}_0, \mathbf{p}_1, \mathbf{p}_2,$$ and, as the last piece, $$\mathbf{p}_{n-2}, \mathbf{p}_{n-1}, \mathbf{p}_n, 2\mathbf{p}_n-\mathbf{p}_{n-1}.$$  
     **Note:** The matrix form of Catmull-Rom curves in the lecture notes is filled with values that have already been multiplied by *alpha*=½. Factor out ½ from the matrix and then multiply it by the *alpha* parameter to evaluate Catmull-Rom curves correctly.
     
     2. (10 points) Evaluate each piece of the Catmull-Rom spline using any technique you like; fill in `EvaluateCatmullRomCurve()`.
 
 4. **(bonus 20 points; you will only get credit for (4.1) and (4.2) if you complete (4.3)) cubic B-Splines***
 
-    1. (5 points) Same as 1.1 above, except for a cubic B-Spline with an array of 2D control points of the form $[ \mathbf{p}_0 = [x_0, y_0]^T, \mathbf{p}_1 = [x_1, y_1]^T, … ]$. Each piece of the B-Spline is defined by four control points: $\mathbf{p}_i, \mathbf{p}_{i+1}, \mathbf{p}_{i+2}, \mathbf{p}_{i+3}$. The function you must fill in is `EvaluateCubicBSpline()`; call `EvaluateCubicBSplineCurve()` with the appropriate control points and $t$ value.
+    1. (5 points) Same as 1.1 above, except for a cubic B-Spline with an array of 2D control points of the form $$[ \mathbf{p}_0 = [x_0, y_0]^T, \mathbf{p}_1 = [x_1, y_1]^T, … ].$$ Each piece of the B-Spline is defined by four control points: $$\mathbf{p}_i, \mathbf{p}_{i+1}, \mathbf{p}_{i+2}, \mathbf{p}_{i+3}.$$ The function you must fill in is `EvaluateCubicBSpline()`; call `EvaluateCubicBSplineCurve()` with the appropriate control points and $t$ value.
 
     2. (5 points) Evaluate a cubic B-Spline curve using any technique you like; fill in `EvaluateCubicBSplineCurve()`.
 
