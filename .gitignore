@@ -1,0 +1,22 @@
+# vscode
+/.vscode
+/.vs
+/vsxmake2022
+/out
+
+# cmake
+/build*
+
+# macOS
+.DS_Store
+# Windows
+Thumbs.db
+
+# us
+/venv
+/external
+/websocketd
+/serve/curvelib.html
+/serve/curvelib.html.mem
+/serve/curvelib.js
+/serve/curvelib.wasm
