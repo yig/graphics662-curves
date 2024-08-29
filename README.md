@@ -8,11 +8,11 @@ In this assignment, you will implement several kinds of interpolating splines. S
 
 There is a demo you can interact with here:
 
-<http://cs.gmu.edu/~ygingold/teaching/cs662/Curves/>
+<https://yig.github.io/graphics662-curves/serve/CurveWASM.html>
 
 ## Setup
 
-Download or clone this code repository. Don't fork it on GitHub, or else your code will be visible to everyone.
+Download or clone this code repository. Don't fork it on GitHub, or else your code will be visible to everyone. If you want to work on it on GitHub, use <https://github.com/new/import> to create an independent, private copy by pointing it at this repository's URL and choosing "Private".
 
 You will need a working C++ compiler and [CMake](https://cmake.org/).
   * On Windows, you can install Visual Studio with its [C++ CMake tools for Windows](https://learn.microsoft.com/en-us/cpp/build/cmake-projects-in-visual-studio). Then you can open a folder with a `CMakeLists.txt` in Visual Studio directly instead of running any of the command line commands. To install command line CMake, you can use the CMake installer from the [official website](https://cmake.org/).
