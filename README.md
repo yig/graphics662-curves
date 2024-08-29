@@ -75,7 +75,7 @@ When done, upload a zip of your entire directory. Do not include your build dire
 
 ## Rubric
 
-1. **(40 points)** Write code to evaluate a cubic **Bézier spline** in three different ways. The data is given as an array of 2D control points of the form $\mathbf{p}_i = [xi, yi]^T$ ($i = 0$ to $m$), where the $i=0,1,2,3$ points define the first cubic Bézier curve, the $i=3,4,5,6$ points define the second cubic Bézier curve, and so on.
+1. **(40 points)** Write code to evaluate a cubic **Bézier spline** in three different ways. The data is given as an array of 2D control points of the form $\mathbf{p}_i = [x_i, y_i]^T$ ($i = 0$ to $m$), where the $i=0,1,2,3$ points define the first cubic Bézier curve, the $i=3,4,5,6$ points define the second cubic Bézier curve, and so on.
 
     1. (10 points) Your first task is to fill in the function `EvaluateCubicBezierSpline()`. Evaluate each cubic Bézier curve `samplesPerCurve` times in the range $[0,1]$. To evaluate an individual curve, pass the control points, a $t∈[0,1]$ parameter, and the `approach` parameter to `EvaluateCubicBezierCurve()`.
     
@@ -87,7 +87,7 @@ When done, upload a zip of your entire directory. Do not include your build dire
 
 2. **(40 points) Hermite splines**
 
-    1. (10 points) Same as 1.1 above, except for a cubic Hermite spline with an array of 2D control points of the form $[ \mathbf{p}_0 = [x_0, y_0]^T, \frac{d\mathbf{p}_0}{dt} = [\frac{dx_0}{dt}, \frac{dy_0}{dt}]^T, \mathbf{p}1 = [x_1, y_1]^T, \frac{d\mathbf{p}_1}{dt} = [\frac{dx_1}{dt}, \frac{dy_1}{dt}]^T, … ]$. Each cubic Hermite curve is defined by four control points: $\mathbf{p}_i, \frac{d\mathbf{p}_i}{dt}, \mathbf{p}_{i+1}, \frac{d\mathbf{p}_{i+1}{dt}$. The function you must fill in is `EvaluateCubicHermiteSpline()`; call `EvaluateCubicHermiteCurve()` with the appropriate control points and $t$ value.
+    1. (10 points) Same as 1.1 above, except for a cubic Hermite spline with an array of 2D control points of the form $[ \mathbf{p}_0 = [x_0, y_0]^T, \frac{d\mathbf{p}_0}{dt} = [\frac{dx_0}{dt}, \frac{dy_0}{dt}]^T, \mathbf{p}1 = [x_1, y_1]^T, \frac{d\mathbf{p}_1}{dt} = [\frac{dx_1}{dt}, \frac{dy_1}{dt}]^T, … ]$. Each cubic Hermite curve is defined by four control points: $\mathbf{p}_i, \frac{d\mathbf{p}_i}{dt}, \mathbf{p}_{i+1}, \frac{d\mathbf{p}_{i+1}}{dt}$. The function you must fill in is `EvaluateCubicHermiteSpline()`; call `EvaluateCubicHermiteCurve()` with the appropriate control points and $t$ value.
 
     2. (10 points) Evaluate a cubic Hermite curve using any technique you like; fill in `EvaluateCubicHermiteCurve()`.
 
