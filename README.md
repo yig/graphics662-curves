@@ -75,7 +75,7 @@ When done, upload a zip of your entire directory. Do not include your build dire
 
 ## Rubric
 
-1. **(40 points)** Write code to evaluate a cubic **Bézier spline** in three different ways. The data is given as an array of 2D control points of the form $\mathbf{p}_i = [x_i, y_i]^T$ ($i = 0$ to $m$), where the $i=0,1,2,3$ points define the first cubic Bézier curve, the $i=3,4,5,6$ points define the second cubic Bézier curve, and so on.
+1. **(40 points)** Write code to evaluate a cubic **Bézier spline** in three different ways. The data is given as an array of 2D control points of the form $\mathbf{p} _ i = [x _ i, y _ i]^T$ ($i = 0$ to $m$), where the $i=0,1,2,3$ points define the first cubic Bézier curve, the $i=3,4,5,6$ points define the second cubic Bézier curve, and so on.
 
     1. (10 points) Your first task is to fill in the function `EvaluateCubicBezierSpline()`. Evaluate each cubic Bézier curve `samplesPerCurve` times in the range $[0,1]$. To evaluate an individual curve, pass the control points, a $t∈[0,1]$ parameter, and the `approach` parameter to `EvaluateCubicBezierCurve()`.
     
@@ -87,25 +87,25 @@ When done, upload a zip of your entire directory. Do not include your build dire
 
 2. **(40 points) Hermite splines**
 
-    1. (10 points) Same as 1.1 above, except for a cubic Hermite spline with an array of 2D control points of the form $$[ \mathbf{p}_0 = [x_0, y_0]^T, \frac{d\mathbf{p}_0}{dt} = [\frac{dx_0}{dt}, \frac{dy_0}{dt}]^T, \mathbf{p}1 = [x_1, y_1]^T, \frac{d\mathbf{p}_1}{dt} = [\frac{dx_1}{dt}, \frac{dy_1}{dt}]^T, … ].$$ Each cubic Hermite curve is defined by four control points: $$\mathbf{p}_i, \frac{d\mathbf{p}_i}{dt}, \mathbf{p}_{i+1}, \frac{d\mathbf{p}_{i+1}}{dt}.$$ The function you must fill in is `EvaluateCubicHermiteSpline()`; call `EvaluateCubicHermiteCurve()` with the appropriate control points and $t$ value.
+    1. (10 points) Same as 1.1 above, except for a cubic Hermite spline with an array of 2D control points of the form $\left[ \mathbf{p} _ 0 = [x _ 0, y _ 0]^T, \frac{d\mathbf{p} _ 0}{dt} = [\frac{dx _ 0}{dt}, \frac{dy _ 0}{dt}]^T, \mathbf{p}1 = [x _ 1, y _ 1]^T, \frac{d\mathbf{p} _ 1}{dt} = [\frac{dx _ 1}{dt}, \frac{dy _ 1}{dt}]^T, … \right].$ Each cubic Hermite curve is defined by four control points: $\mathbf{p} _ i, \frac{d\mathbf{p} _ i}{dt}, \mathbf{p} _ {i+1}, \frac{d\mathbf{p} _ {i+1}}{dt}.$ The function you must fill in is `EvaluateCubicHermiteSpline()`; call `EvaluateCubicHermiteCurve()` with the appropriate control points and $t$ value.
 
     2. (10 points) Evaluate a cubic Hermite curve using any technique you like; fill in `EvaluateCubicHermiteCurve()`.
 
-    3. (20 points) Construct a “natural” cubic Hermite spline having $C^2$ continuity that interpolate the points $\mathbf{p}_i$. Make the second derivatives at either end of the spline equal to 0. Fill in `CalculateHermiteSplineDerivativesForC2Continuity()`.  
-    **Note:** Hermite curves have derivative vectors, one for each $\mathbf{p}_i$. The hard part of this portion of the question is working out the math to obtain $C^2$ continuity between the piecewise curves.  
-    **Hint:** For each pair of adjacent Hermite curves, you can write an equation that specifies that the second derivatives of the curves are equal. You can then solve the system of equations to obtain the needed control derivatives.
+    3. (20 points) Construct a “natural” cubic Hermite spline having $C^2$ continuity that interpolate the points $\mathbf{p} _ i$. Make the second derivatives at either end of the spline equal to 0. Fill in `CalculateHermiteSplineDerivativesForC2Continuity()`.  
+    **Note:** Hermite curves have derivative vectors, one for each $\mathbf{p} _ i$. The hard part of this is working out the math to solve for the derivatives with $C^2$ continuity between the piecewise curves.  
+    **Hint:** For each pair of adjacent Hermite curves, you can write an equation that specifies that the second derivatives of the curves are equal. You can then solve the system of equations to obtain the needed control derivatives. If the equation for a curve $i$ is $f _ i(t)$, then $C^2$ continuity means $f _ i''(1) = f _ {i+1}''(0)$. You can write that equation down in terms of the control points. You will get a linear equation for each derivative (except the first and last). You stack all the linear equations into a matrix $A$ and right-hand-side $b$ and solve the equations $A x = b$ to obtain the desired derivatives.
 
 3. **(20 points) Catmull-Rom splines**
 
-    1. (10 points) Same as 1.1 above, except for a centripetal Catmull-Rom spline with an array of 2D control points of the form $$[ \mathbf{p}_0 = [x_0, y_0]^T, \mathbf{p}_1 = [x_1, y_1]^T, … ].$$ Each piece of the Catmull-Rom curve is defined by four control points: $$\mathbf{p}_i, \mathbf{p}_{i+1}, \mathbf{p}_{i+2}, \mathbf{p}_{i+3}.$$ The function you must fill in is `EvaluateCatmullRomSpline()`; call `EvaluateCatmullRomCurve()` with the appropriate control points, $t$ value, and the given *alpha* value (which will be set to .5 for centripetal).  
-    **Note:** To make your Catmull-Rom spline interpolate the first and last control points, also evaluate, as the first piece, $$2\mathbf{p}_0 -\mathbf{p}_1, \mathbf{p}_0, \mathbf{p}_1, \mathbf{p}_2,$$ and, as the last piece, $$\mathbf{p}_{n-2}, \mathbf{p}_{n-1}, \mathbf{p}_n, 2\mathbf{p}_n-\mathbf{p}_{n-1}.$$  
+    1. (10 points) Same as 1.1 above, except for a centripetal Catmull-Rom spline with an array of 2D control points of the form $[ \mathbf{p} _ 0 = [x _ 0, y _ 0]^T, \mathbf{p} _ 1 = [x _ 1, y _ 1]^T, … ].$ Each piece of the Catmull-Rom curve is defined by four control points: $\mathbf{p} _ i, \mathbf{p} _ {i+1}, \mathbf{p} _ {i+2}, \mathbf{p} _ {i+3}.$ The function you must fill in is `EvaluateCatmullRomSpline()`; call `EvaluateCatmullRomCurve()` with the appropriate control points, $t$ value, and the given *alpha* value (which will be set to .5 for centripetal).  
+    **Note:** To make your Catmull-Rom spline interpolate the first and last control points, also evaluate, as the first piece, $2\mathbf{p} _ 0 -\mathbf{p} _ 1, \mathbf{p} _ 0, \mathbf{p} _ 1, \mathbf{p} _ 2,$ and, as the last piece, $\mathbf{p} _ {n-2}, \mathbf{p} _ {n-1}, \mathbf{p} _ n, 2\mathbf{p} _ n-\mathbf{p} _ {n-1}.$  
     **Note:** The matrix form of Catmull-Rom curves in the lecture notes is filled with values that have already been multiplied by *alpha*=½. Factor out ½ from the matrix and then multiply it by the *alpha* parameter to evaluate Catmull-Rom curves correctly.
     
     2. (10 points) Evaluate each piece of the Catmull-Rom spline using any technique you like; fill in `EvaluateCatmullRomCurve()`.
 
-4. **(bonus 20 points; you will only get credit for (4.1) and (4.2) if you complete (4.3)) cubic B-Splines***
+4. **(bonus 20 points; you only get credit for (4.1) and (4.2) if you complete (4.3)) Cubic B-Splines**
 
-    1. (5 points) Same as 1.1 above, except for a cubic B-Spline with an array of 2D control points of the form $$[ \mathbf{p}_0 = [x_0, y_0]^T, \mathbf{p}_1 = [x_1, y_1]^T, … ].$$ Each piece of the B-Spline is defined by four control points: $$\mathbf{p}_i, \mathbf{p}_{i+1}, \mathbf{p}_{i+2}, \mathbf{p}_{i+3}.$$ The function you must fill in is `EvaluateCubicBSpline()`; call `EvaluateCubicBSplineCurve()` with the appropriate control points and $t$ value.
+    1. (5 points) Same as 1.1 above, except for a cubic B-Spline with an array of 2D control points of the form $[ \mathbf{p} _ 0 = [x _ 0, y _ 0]^T, \mathbf{p} _ 1 = [x _ 1, y _ 1]^T, … ].$ Each piece of the B-Spline is defined by four control points: $\mathbf{p} _ i, \mathbf{p} _ {i+1}, \mathbf{p} _ {i+2}, \mathbf{p} _ {i+3}.$ The function you must fill in is `EvaluateCubicBSpline()`; call `EvaluateCubicBSplineCurve()` with the appropriate control points and $t$ value.
 
     2. (5 points) Evaluate a cubic B-Spline curve using any technique you like; fill in `EvaluateCubicBSplineCurve()`.
 
