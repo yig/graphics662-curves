@@ -67,7 +67,7 @@ Points EvaluateCubicBezierSpline( const Points& controlPoints, const int samples
     
     // ADD YOUR CODE HERE
     Points result;
-    return results;
+    return result;
 }
 
 /// ======================================================================================
