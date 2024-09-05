@@ -94,6 +94,7 @@ When done, upload a zip of your entire directory. Do not include your build dire
     3. (20 points) Construct a “natural” cubic Hermite spline having $C^2$ continuity that interpolate the points $\mathbf{p} _ i$. Make the second derivatives at either end of the spline equal to 0. Fill in `CalculateHermiteSplineDerivativesForC2Continuity()`.  
     **Note:** Hermite curves have derivative vectors, one for each $\mathbf{p} _ i$. The hard part of this is working out the math to solve for the derivatives with $C^2$ continuity between the piecewise curves.  
     **Hint:** For each pair of adjacent Hermite curves, you can write an equation that specifies that the second derivatives of the curves are equal. You can then solve the system of equations to obtain the needed control derivatives. If the equation for a curve $i$ is $f _ i(t)$, then $C^2$ continuity means $f _ i''(1) = f _ {i+1}''(0)$. You can write that equation down in terms of the control points. You will get a linear equation for each derivative (except the first and last). You stack all the linear equations into a matrix $A$ and right-hand-side $b$ and solve the equations $A x = b$ to obtain the desired derivatives.
+    **Hint:** See [`C2 Hermite system`](docs/C2 Hermite system.png) for a partial derivation.
 
 3. **(20 points) Catmull-Rom splines**
 
