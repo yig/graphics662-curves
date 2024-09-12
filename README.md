@@ -19,7 +19,7 @@ You will need a working C++ compiler and [CMake](https://cmake.org/).
   * On macOS, you should install `Xcode` via the `App Store`. For CMake, use [Homebrew](https://brew.sh/): `brew install cmake`.
   * On Linux, use your distribution's package manager to install a compiler (clang or gcc) and cmake.
 
-You will also need to install [websocketd](http://websocketd.com/). The websocketd page has downloadable binaries for many platforms. You can put the binary in the `serve` directory. macOS users should install it via `brew install websocketd`.
+You will also need to install [websocketd](http://websocketd.com/). The websocketd page has downloadable binaries for many platforms. You can put the binary next in the top-level directory (next to `CMakeLists.txt`). macOS users should install it via `brew install websocketd`.
 
 ## Compiling
 
