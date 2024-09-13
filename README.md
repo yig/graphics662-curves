@@ -84,6 +84,7 @@ When done, upload a zip of your entire directory. Do not include your build dire
     3. (10 points) Evaluate a cubic Bezier curve using the de Casteljau algorithm; fill in `EvaluateCubicBezierCurveCasteljau()`.
     
     4. (10 points) Evaluate a cubic Bezier curve by creating and multiplying small matrices; fill in `EvaluateCubicBezierCurveMatrix()`. The [Eigen](https://eigen.tuxfamily.org) matrix library is included in the provided code; documentation can be found here: <https://eigen.tuxfamily.org/dox/group__QuickRefPage.html>.
+    **Hint:** See [`Bezier matrix`](docs/Bezier%20matrix.png) for a partial derivation.
 
 2. **(40 points) Hermite splines**
 
