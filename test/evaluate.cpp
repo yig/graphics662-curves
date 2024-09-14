@@ -4,7 +4,7 @@
 #include "PrintToInclude.h"
 
 // Run once with GENERATE_DATA defined, then copy the resulting .h files into `test/`.
-// #define GENERATE_DATA
+#define GENERATE_DATA
 #ifdef GENERATE_DATA
     #include "GetBootstrapped.h"
 #else
@@ -14,6 +14,8 @@
     #include "GetEvaluateCubicHermiteSpline.h"
     #include "GetEvaluateCatmullRomSpline.h"
     #include "GetEvaluateCubicBSpline.h"
+    #include "GetCalculateHermiteSplineDerivativesForC2Continuity.h"
+    #include "GetComputeBSplineFromInterpolatingPoints.h"
 #endif
 
 #include "CurveFunctions.h"
@@ -110,4 +112,32 @@ TEST_CASE( "EvaluateSplines" ) {
         }
     }
     
+}
+
+TEST_CASE( "CalculateHermiteSplineDerivativesForC2Continuity" ) {
+    Points result;
+    result.reserve( ControlPoints.size() * 2 );
+    for( int i = 0; i < ControlPoints.size(); ++i ) {
+        result.push_back( ControlPoints.at(i) );
+        result.push_back( { 0, 0 } );
+    }
+    CalculateHermiteSplineDerivativesForC2Continuity( result );
+    
+#ifdef GENERATE_DATA
+    PrintToInclude( "CalculateHermiteSplineDerivativesForC2Continuity", "CalculateHermiteSplineDerivativesForC2Continuity.h", result );
+    const Points truth = result;
+#else
+    const Points truth = GetCalculateHermiteSplineDerivativesForC2Continuity();
+#endif
+}
+
+TEST_CASE( "ComputeBSplineFromInterpolatingPoints" ) {
+    const Points result = ComputeBSplineFromInterpolatingPoints( ControlPoints );
+    
+#ifdef GENERATE_DATA
+    PrintToInclude( "ComputeBSplineFromInterpolatingPoints", "ComputeBSplineFromInterpolatingPoints.h", result );
+    const Points truth = result;
+#else
+    const Points truth = GetComputeBSplineFromInterpolatingPoints();
+#endif
 }
