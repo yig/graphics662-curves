@@ -9,6 +9,7 @@ FetchContent_MakeAvailable( doctest )
 
 add_executable( evaluate evaluate.cpp )
 target_link_libraries( evaluate PRIVATE CurveLib doctest::doctest )
+set_target_properties( evaluate PROPERTIES CXX_STANDARD 20 )
 add_test( NAME evaluate COMMAND evaluate )
 
 ## On Windows, the following line may help build a static binary that can be called from the autograder.

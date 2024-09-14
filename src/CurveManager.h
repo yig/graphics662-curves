@@ -9,11 +9,9 @@ namespace Curve
 // If no such class is known, returns 0.
 std::unique_ptr< Curve::InterpolatingCurve > NewCurveFactory( const std::string& curveType )
 {
-    using enum Curve::EvaluateCubicBezierCurveApproach;
-    
-    if( curveType == "CubicBezierBernstein" ) return std::make_unique<Curve::CubicBezierCurve>( Bernstein );
-    else if( curveType == "CubicBezierCasteljau" ) return std::make_unique<Curve::CubicBezierCurve>( Casteljau );
-    else if( curveType == "CubicBezierMatrix" ) return std::make_unique<Curve::CubicBezierCurve>( Matrix );
+    if( curveType == "CubicBezierBernstein" ) return std::make_unique<Curve::CubicBezierCurve>( Curve::EvaluateCubicBezierCurveApproach::Bernstein );
+    else if( curveType == "CubicBezierCasteljau" ) return std::make_unique<Curve::CubicBezierCurve>( Curve::EvaluateCubicBezierCurveApproach::Casteljau );
+    else if( curveType == "CubicBezierMatrix" ) return std::make_unique<Curve::CubicBezierCurve>( Curve::EvaluateCubicBezierCurveApproach::Matrix );
     else if( curveType == "CubicHermite" ) return std::make_unique<Curve::CubicHermiteCurve>();
     else if( curveType == "CatmullRom" ) return std::make_unique<Curve::CatmullRomCurve>(.5);
     else if( curveType == "CubicBSpline" ) return std::make_unique<Curve::CubicBSplineCurve>();

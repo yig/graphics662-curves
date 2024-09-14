@@ -7,7 +7,7 @@ using Eigen::Matrix4d;
 using Eigen::Vector4d;
 
 #include <string>
-#include <format>
+// #include <format> // emscripten and C++20 aren't good friends yet.
 
 #include <cassert>
 #include <cmath>
@@ -16,7 +16,9 @@ namespace
 {
 // For debugging, this function will return a string given a Point.
 std::string point2string( const Curve::Point& p ) {
-    return std::format( "( {}, {} )", p(0), p(1) );
+    return "( " + std::to_string(p(0)) + ", " + std::to_string(p(1)) + " )";
+    // emscripten and C++20 aren't good friends yet.
+    // return std::format( "( {}, {} )", p(0), p(1) );
 }
 }
 
