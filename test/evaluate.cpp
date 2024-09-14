@@ -4,7 +4,7 @@
 #include "PrintToInclude.h"
 
 // Run once with GENERATE_DATA defined, then copy the resulting .h files into `test/`.
-#define GENERATE_DATA
+// #define GENERATE_DATA
 #ifdef GENERATE_DATA
     #include "GetBootstrapped.h"
 #else
@@ -124,7 +124,7 @@ TEST_CASE( "CalculateHermiteSplineDerivativesForC2Continuity" ) {
     CalculateHermiteSplineDerivativesForC2Continuity( result );
     
 #ifdef GENERATE_DATA
-    PrintToInclude( "CalculateHermiteSplineDerivativesForC2Continuity", "CalculateHermiteSplineDerivativesForC2Continuity.h", result );
+    PrintToInclude( "GetCalculateHermiteSplineDerivativesForC2Continuity", "GetCalculateHermiteSplineDerivativesForC2Continuity.h", result );
     const Points truth = result;
 #else
     const Points truth = GetCalculateHermiteSplineDerivativesForC2Continuity();
@@ -135,7 +135,7 @@ TEST_CASE( "ComputeBSplineFromInterpolatingPoints" ) {
     const Points result = ComputeBSplineFromInterpolatingPoints( ControlPoints );
     
 #ifdef GENERATE_DATA
-    PrintToInclude( "ComputeBSplineFromInterpolatingPoints", "ComputeBSplineFromInterpolatingPoints.h", result );
+    PrintToInclude( "GetComputeBSplineFromInterpolatingPoints", "GetComputeBSplineFromInterpolatingPoints.h", result );
     const Points truth = result;
 #else
     const Points truth = GetComputeBSplineFromInterpolatingPoints();
