@@ -51,6 +51,29 @@ const std::vector< std::tuple< std::string, std::function<Points(const Points& p
     { "EvaluateCubicBSpline", EvaluateCubicBSpline, GetEvaluateCubicBSpline },
 };
 
+void ComparePoints( const Points& result, const Points& truth ) {
+    // Sequences should have the same length.
+    CHECK( result.size() == truth.size() );
+    
+    // Let's find the maximum deviation of any position and use that as the score.
+    real score = 0.0;
+    for( int i = 0; i < std::min( result.size(), truth.size() ); ++i ) {
+        const real l = ( result.at(i) - truth.at(i) ).norm();
+        score = std::max( score, l );
+        CHECK( l < eps );
+    }
+    // The ground truth data fits in an approximately 300x300 bounding box, so let's
+    // divide by 300*sqrt(2) ~= 425 to get a number in the range [0,1].
+    const real score_out_of_100 =
+        // If there are no points to compare, score is 0.
+        std::min( result.size(), truth.size() ) > 0
+        ? (100.0*(1.0-score/425))
+        : 0
+        ;
+    // std::cerr << "Score: " << score_out_of_100 << '\n';
+    MESSAGE( "Score: ", score_out_of_100 );
+}
+
 }
 
 /*
@@ -93,22 +116,8 @@ TEST_CASE( "EvaluateSplines" ) {
 #else
             const Points truth = g();
 #endif
-                    
-            // applyTransformation() shouldn't touch face data
-            CHECK( result.size() == truth.size() );
             
-            // Let's find the maximum deviation of any position and use that as the score.
-            real score = 0.0;
-            for( int i = 0; i < std::min( result.size(), truth.size() ); ++i ) {
-                const real l = ( result.at(i) - truth.at(i) ).norm();
-                score = std::max( score, l );
-                CHECK( l < eps );
-            }
-            // The ground truth data fits in an approximately 300x300 bounding box, so let's
-            // divide by 300*sqrt(2) ~= 425 to get a number in the range [0,1].
-            const real score_out_of_100 = (100.0*(1.0-score/425));
-            // std::cerr << "Score: " << score_out_of_100 << '\n';
-            MESSAGE( "Score: ", score_out_of_100 );
+            ComparePoints( result, truth );
         }
     }
     
@@ -129,6 +138,8 @@ TEST_CASE( "CalculateHermiteSplineDerivativesForC2Continuity" ) {
 #else
     const Points truth = GetCalculateHermiteSplineDerivativesForC2Continuity();
 #endif
+    
+    ComparePoints( result, truth );
 }
 
 TEST_CASE( "ComputeBSplineFromInterpolatingPoints" ) {
@@ -140,4 +151,6 @@ TEST_CASE( "ComputeBSplineFromInterpolatingPoints" ) {
 #else
     const Points truth = GetComputeBSplineFromInterpolatingPoints();
 #endif
+    
+    ComparePoints( result, truth );
 }
