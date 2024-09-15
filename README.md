@@ -19,7 +19,7 @@ You will need a working C++ compiler and [CMake](https://cmake.org/).
   * On macOS, you should install `Xcode` via the `App Store`. For CMake, use [Homebrew](https://brew.sh/): `brew install cmake`.
   * On Linux, use your distribution's package manager to install a compiler (clang or gcc) and cmake.
 
-You will also need to install [websocketd](http://websocketd.com/). The websocketd page has downloadable binaries for many platforms. You can put the binary next in the top-level directory (next to `CMakeLists.txt`). macOS users should install it via `brew install websocketd`.
+(Recommended) Install [websocketd](http://websocketd.com/). The websocketd page has downloadable binaries for many platforms. You can put the binary next in the top-level directory (next to `CMakeLists.txt`). macOS users should install it via `brew install websocketd`.
 
 ## Compiling
 
@@ -52,6 +52,10 @@ You can compile your code for the web (to WebAssembly) and run it entirely in-br
     ```
     and then browsing to `<http://localhost:8001/CurveWASM.html>`.
 
+## (Optional) Compiling and Running without websocketd
+
+To compile and run without websocketd, use `ccmake -B build-dir` and set the `BUILTIN_WEBSOCKET_SERVER` flag to `ON`. (You can also directly edit the `CMakeLists.txt` to set the default to `ON`.) When you do this, a new target will appear, `CurveWSServer`. It will listen for WebSocket connections on port 8000. You will need to run a static web server in the `serve` directory to serve the web GUI, as in `python3 -m http.server -d serve 8001` and then open your browser to <http://localhost:8001/Curve.html>.
+
 ## Writing
 
 Fill in the functions in the file `CurveFunctions.cpp`. That's the only file you need to change.
@@ -64,7 +68,9 @@ Fill in the functions in the file `CurveFunctions.cpp`. That's the only file you
 
 You can debug the tester binary by running `build-dir/test/evaluate` in your debugger.
 
-You can debug the GUI, too. After you open the web page, the browser will connect via websocket to `websocketd`, which will launch the `serve/CurveJSONServer` binary. Then you can attach to the `CurveJSONServer` process in your debugger.
+You can debug the GUI, too. After you open the web page, the browser will connect via websocket to `websocketd`, which will launch the `serve/CurveJSONServer` binary. Then you can attach to the `CurveJSONServer` process in your debugger. If this doesn't work for you, try the `BUILTIN_WEBSOCKET_SERVER` approach.
+
+If you are using the optional `BUILTIN_WEBSOCKET_SERVER`, then you can directly launch the `CurveWSServer` target in your debugger.
 
 Supposedly, you can [debug WebAssembly directly in Chrome](https://developer.chrome.com/docs/devtools/wasm/). Let me know if this works for you.
 

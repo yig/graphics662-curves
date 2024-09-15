@@ -131,6 +131,41 @@ else()
         COMMENT "Open your web browser to: http://localhost:8000/Curve.html"
     )
     
+    option( BUILTIN_WEBSOCKET_SERVER "Built-in WebSocket Server" OFF )
+    if( BUILTIN_WEBSOCKET_SERVER )
+        FetchContent_Declare(
+            LibDataChannel
+            GIT_REPOSITORY https://github.com/paullouisageneau/libdatachannel
+            GIT_TAG v0.21.2
+            GIT_SHALLOW TRUE
+            GIT_PROGRESS TRUE
+            )
+        set(NO_EXAMPLES ON CACHE BOOL "" FORCE)
+        set(NO_TESTS ON CACHE BOOL "" FORCE)
+        set(NO_MEDIA ON CACHE BOOL "" FORCE)
+        FetchContent_MakeAvailable( LibDataChannel )
+        
+        ## Declare the web socket server executable
+        add_executable( CurveWSServer src/CurveWSServer.cpp )
+        target_link_libraries( CurveWSServer
+            PRIVATE
+                CurveLib
+                nlohmann_json::nlohmann_json
+                LibDataChannel::LibDataChannel
+        )
+        set_target_properties( CurveWSServer PROPERTIES CXX_STANDARD 20 )
+        
+        ## Run the executable from the `serve` directory
+        # include(FindPython3)
+        add_custom_target( run_WS
+            # COMMAND ${Python3_EXECUTABLE} -m http.server -d ${CMAKE_SOURCE_DIR}/serve 8001
+            COMMAND CurveWSServer
+            USES_TERMINAL
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}/serve
+            COMMENT "Open your web browser to: http://localhost:8001/Curve.html"
+            )
+    endif()
+    
     ## Add tests
     enable_testing()
     add_subdirectory( test )
