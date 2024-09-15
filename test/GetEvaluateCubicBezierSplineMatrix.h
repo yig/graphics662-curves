@@ -68,7 +68,7 @@ inline Curve::Points GetEvaluateCubicBezierSplineMatrix() {
     result.push_back({ 359.89973481924073, 233.79416602329562 });
     result.push_back({ 351.71769997650296, 232.26078345809137 });
     result.push_back({ 343.0778758685509, 231.3199288375684 });
-    result.push_back({ 270, 274 });
+    result.push_back({ 334, 231 });
 
     return result;
 }
