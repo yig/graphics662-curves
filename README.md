@@ -56,6 +56,8 @@ You can compile your code for the web (to WebAssembly) and run it entirely in-br
 
 Fill in the functions in the file `CurveFunctions.cpp`. That's the only file you need to change.
 
+**Note:** Don't print extra messages to standard output (e.g., `std::cout`). Instead, print messages to standard error (`std::cerr`). The code uses standard input and output to communicate via WebSocket with the GUI.
+
 **THIS IS AN INDIVIDUAL, NOT A GROUP ASSIGNMENT. That means all code written for this assignment should be original! Code that is substantially the same will be considered cheating.** You may work on theoretical derivations with other students, but not code. In your `Notes.txt`, please note who deserves a star (who helped you with the assignment).
 
 ## Debugging
