@@ -8,8 +8,6 @@
     <title>
     Curve
     </title>
-    
-    <script src="js/jquery-3.7.1.slim.js" type="text/javascript"></script>
 
 <style type="text/css">
 body
@@ -89,7 +87,7 @@ import { WebSocketClient } from './js/websocket-client.js';
     }
     function get_approach()
     {
-        return $("#curveType option:selected").val();
+        return document.querySelector('#curveType').value;
     }
     function clear_curve()
     {
@@ -113,6 +111,9 @@ import { WebSocketClient } from './js/websocket-client.js';
         ctx.clearRect( 0, 0, canvas.width, canvas.height );
         
         if( curveData === null ) return;
+        // Why would this ever happen? It does, though.
+        if( curveData.controlPoints === undefined ) return;
+        if( curveData.curve === undefined ) return;
         
         const kBackgroundColor = 'rgb( 0,0,0 )';
         const kInterpPointColor = 'rgb( 0,0,255 )';
@@ -146,7 +147,7 @@ import { WebSocketClient } from './js/websocket-client.js';
         }
         
         // Draw the control points
-        const showControlPoints = $("#show_control_points").is(':checked');
+        const showControlPoints = document.getElementById('show_control_points').checked;
         const curveType = get_approach();
         if( showControlPoints && controlPoints.length > 0 )
         {
@@ -247,12 +248,9 @@ import { WebSocketClient } from './js/websocket-client.js';
     
     function event_xy_in_container( evt, container )
     {
-        // The advice to use offsetLeft/Top:
-        //     http://docs.jquery.com/Tutorials:Mouse_Position
-        // is wrong.
-        // Instead, using jQuery's offset() gives the desired result:
-        const x = evt.pageX - $(container).offset().left;
-        const y = evt.pageY - $(container).offset().top;
+        const rect = container.getBoundingClientRect();
+        const x = evt.clientX - rect.left;
+        const y = evt.clientY - rect.top;
         
         return [ x, y ];
     }
@@ -270,9 +268,9 @@ import { WebSocketClient } from './js/websocket-client.js';
                 need_redisplay();
                 
                 // Set up the move event handler:
-                $(this).mousemove( result.mousemove );
+                this.addEventListener( "mousemove", result.mousemove );
                 // Stop moving on mouseup (which must be on the window, not the element).
-                $(window).mouseup( result.mouseup );
+                window.addEventListener( "mouseup", result.mouseup );
                 
                 // NOTE: If we wanted to forward the event
                 //       to result.mousemove(), we would do it
@@ -294,8 +292,8 @@ import { WebSocketClient } from './js/websocket-client.js';
             {
                 // Stop moving on mouseup.
                 // NOTE: this is the window here, not #curve_canvas.
-                $('#curve_canvas').off( 'mousemove' );
-                $(window).off( 'mouseup' );
+                document.getElementById('curve_canvas').removeEventListener( "mousemove", result.mousemove );
+                window.removeEventListener( "mouseup", result.mouseup );
             };
         
         return result;
@@ -328,19 +326,22 @@ import { WebSocketClient } from './js/websocket-client.js';
     
     function set_mouse_mode( mode )
     {
+        let curve_canvas = document.getElementById('curve_canvas');
+        
         // Disable the current event listeners.
-        $('#curve_canvas').off( 'mousedown' );
-        $('#curve_canvas').off( 'mousemove' );
-        $( window ).off( 'mouseup' );
+        curve_canvas.removeEventListener( "mousedown", add_handlers.mousedown );
+        curve_canvas.removeEventListener( "mousedown", move_handlers.mousedown );
+        curve_canvas.removeEventListener( "mousemove", move_handlers.mousemove );
+        window.removeEventListener( "mouseup", move_handlers.mouseup );
         
         // Enable the correct mouse-down event listener.
         if( 'move' == mode )
         {
-            $("#curve_canvas").mousedown( move_handlers.mousedown );
+            curve_canvas.addEventListener( "mousedown", move_handlers.mousedown );
         }
         else if( 'add' == mode )
         {
-            $("#curve_canvas").mousedown( add_handlers.mousedown );
+            curve_canvas.addEventListener("mousedown", add_handlers.mousedown );
         }
         else
         {
@@ -351,6 +352,8 @@ import { WebSocketClient } from './js/websocket-client.js';
     function PickControlPoint( xy )
     {
         if( curveData === null ) return null;
+        // Why would this ever happen? It does, though.
+        if( curveData.controlPoints === undefined ) return null;
         
         // Pick within this factor of the radius.
         const kTolerance = 2.;
@@ -399,8 +402,8 @@ import { WebSocketClient } from './js/websocket-client.js';
     ///
     // Setup our global variables.
     {
-        canvas = $("#curve_canvas").get(0);
-        ctx = $("#curve_canvas").get(0).getContext("2d");
+        canvas = document.getElementById('curve_canvas');
+        ctx = canvas.getContext("2d");
         
         // We need to await here, because setup_callbacks() also calls the change handlers
         // to start setting up the server.
@@ -412,36 +415,41 @@ import { WebSocketClient } from './js/websocket-client.js';
     }
     function setup_callbacks()
     {
-        $("#curveType").change( function() {
-            curveType = get_approach();
+        let curveTypeElement = document.getElementById('curveType');
+        curveTypeElement.addEventListener( "change", function() {
+            const curveType = get_approach();
             curvelib.send( JSON.stringify( { "command": "SetCurveType", "curveType": curveType } ) );
             refresh_data();
             } );
         // Call the style-changed function to set the module's style to
         // what it is here in the HTML.
-        $("#curveType").change();
+        curveTypeElement.dispatchEvent(new Event('change'));
         
-        $("#show_control_points").change( function() {
-            const show_control_points = $("#show_control_points").is(':checked');
+        let show_control_points_element = document.getElementById('show_control_points');
+        show_control_points_element.addEventListener( "change", function() {
             need_redisplay();
             } );
         // Call the changed function to set the module's value to
         // what it is here in the HTML.
-        $("#show_control_points").change();
+        show_control_points_element.dispatchEvent(new Event('change'));
         
-        $("#clear").click( function() {
+        document.getElementById('clear').addEventListener( "click", function() {
             clear_curve();
             refresh_data();
             } );
         
-        $("#test_data_long1").click( function() {
+        document.getElementById("test_data_long1").addEventListener( "click", function() {
             setup_test_data( kTestDataLong1 );
             } );
         
-        $("input[name=mouse_mode]").change( function() {
-            set_mouse_mode( $("input[name=mouse_mode]:checked").val() );
+        let mouse_mode_els = document.querySelectorAll( "input[name=mouse_mode]" );
+        for( let el of mouse_mode_els )
+        {
+            el.addEventListener( "change", function() {
+                set_mouse_mode( document.querySelector("input[name=mouse_mode]:checked").value );
             } );
-        set_mouse_mode( $("input[name=mouse_mode]:checked").val() );
+        }
+        set_mouse_mode( document.querySelector("input[name=mouse_mode]:checked").value );
     }
     
     /*
