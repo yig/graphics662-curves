@@ -8,8 +8,6 @@
     <title>
     Curve
     </title>
-    
-    <script src="js/jquery-2.1.1.min.js" type="text/javascript"></script>
 
 <style type="text/css">
 body
@@ -19,21 +17,16 @@ body
 
 /* http://stackoverflow.com/questions/7059039/how-to-prevent-accidental-select-drag-highlight-on-webpage-when-drawing-off-html */
 /* UPDATE: evt.preventDefault() in a mouse down callback actually works. */
-.canvasholder
+#canvasholder
 {
-  -moz-user-select: none;
-  -khtml-user-select: none;
-  -webkit-user-select: none;
   user-select: none;
+}
+#canvasholder > form {
+    padding-bottom: 1ex;
 }
 canvas
 {
     outline: 1px solid #000;
-}
-
-#nacl_holder embed
-{
-    float: left;
 }
 </style>
 
@@ -44,8 +37,6 @@ canvas
 <form action="">
 <input type="button" id="clear" name="clear" value="Clear">
 <input type="button" id="test_data_long1" name="test_data_long1" value="Setup Test Spline">
-<label for="add"><input type="radio" name="mouse_mode" value="add" id="add" checked="checked">Add Point</label>
-<label for="move"><input type="radio" name="mouse_mode" value="move" id="move">Move Point</label>
 <select name="curveType" id="curveType">
 <option value="CubicBezierBernstein" selected="selected">CubicBezierBernstein</option>
 <option value="CubicBezierCasteljau">CubicBezierCasteljau</option>
@@ -69,11 +60,10 @@ onRuntimeInitialized: function() {
     ///
     /// Global variables.
     ///
-    var curvelib = null;
-    var curveData = null;
-    var canvas = null;
-    var ctx = null;
-    
+    let curvelib = null;
+    let curveData = null;
+    let canvas = null;
+    let ctx = null;
     
     ///
     /// Global functions.
@@ -94,8 +84,16 @@ onRuntimeInitialized: function() {
             };
         draw();
     }
+    function get_approach()
+    {
+        return document.querySelector('#curveType').value;
+    }
+    function clear_curve()
+    {
+        curvelib.ClearAll();
+    }
     
-    var kPointRadius = 5.;
+    const kPointRadius = 5.;
     function DrawCircle( pt )
     {
         ctx.moveTo( pt[0], pt[1] );
@@ -113,12 +111,12 @@ onRuntimeInitialized: function() {
         
         if( curveData === null ) return;
         
-        var kBackgroundColor = 'rgb( 0,0,0 )';
-        var kInterpPointColor = 'rgb( 0,0,255 )';
-        var kCurveColor = 'rgb(0,0,0)';
-        var kCurveWidth = 4;
-        var kControlPointColor = 'rgb(255,50,50)';
-        var kControlPointLineWidth = 2;
+        const kBackgroundColor = 'rgb( 0,0,0 )';
+        const kInterpPointColor = 'rgb( 0,0,255 )';
+        const kCurveColor = 'rgb(0,0,0)';
+        const kCurveWidth = 4;
+        const kControlPointColor = 'rgb(255,50,50)';
+        const kControlPointLineWidth = 2;
         
         // A solid black background:
         // UPDATE: Let's leave it translucent.
@@ -127,8 +125,8 @@ onRuntimeInitialized: function() {
         ctx.fillRect( 0, 0, canvas.width, canvas.height );
         */
         
-        var controlPoints = curveData.controlPoints;
-        var curve = curveData.curve;
+        const controlPoints = curveData.controlPoints;
+        const curve = curveData.curve;
         
         // Draw the curve.
         // It takes two points to make a line.
@@ -137,7 +135,7 @@ onRuntimeInitialized: function() {
             ctx.lineWidth = kCurveWidth;
             ctx.strokeStyle = kCurveColor;
             ctx.beginPath();
-            for( var i = 0; i < curve.length - 1; i++ ){
+            for( let i = 0; i < curve.length - 1; i++ ){
                 ctx.moveTo(curve[i][0], curve[i][1]);
                 ctx.lineTo(curve[i + 1][0], curve[i + 1][1]);
             }
@@ -145,8 +143,8 @@ onRuntimeInitialized: function() {
         }
         
         // Draw the control points
-        var showControlPoints = $("#show_control_points").is(':checked');
-        var curveType = $("#curveType option:selected").val();
+        const showControlPoints = document.getElementById('show_control_points').checked;
+        const curveType = get_approach();
         if( showControlPoints && controlPoints.length > 0 )
         {
             ctx.lineWidth = kControlPointLineWidth;
@@ -159,7 +157,7 @@ onRuntimeInitialized: function() {
                 // Draw the polyline.
                 ctx.beginPath();
                 ctx.moveTo( controlPoints[0][0], controlPoints[0][1] );
-                for( var i = 1; i < controlPoints.length; ++i )
+                for( let i = 1; i < controlPoints.length; ++i )
                 {
                     ctx.lineTo( controlPoints[i][0], controlPoints[i][1] );
                 }
@@ -167,7 +165,7 @@ onRuntimeInitialized: function() {
                 
                 // Draw the vertices as little circles.
                 ctx.beginPath();
-                for( var i = 0; i < controlPoints.length; ++i )
+                for( let i = 0; i < controlPoints.length; ++i )
                 {
                     DrawCircle( controlPoints[i] );
                 }
@@ -180,7 +178,7 @@ onRuntimeInitialized: function() {
                 
                 // Draw the lines.
                 ctx.beginPath();
-                for( var i = 0; i < controlPoints.length; i += 2 )
+                for( let i = 0; i < controlPoints.length; i += 2 )
                 {
                     ctx.moveTo( controlPoints[i][0], controlPoints[i][1] );
                     ctx.lineTo( controlPoints[i][0] + controlPoints[i+1][0], controlPoints[i][1] + controlPoints[i+1][1] );
@@ -189,7 +187,7 @@ onRuntimeInitialized: function() {
                 
                 // Draw the vertices as little circles.
                 ctx.beginPath();
-                for( var i = 0; i < controlPoints.length; i += 2 )
+                for( let i = 0; i < controlPoints.length; i += 2 )
                 {
                     DrawCircle( controlPoints[i] );
                     DrawCircle( AddPoints( controlPoints[i], controlPoints[i+1] ) );
@@ -203,7 +201,7 @@ onRuntimeInitialized: function() {
                 
                 // Draw the lines.
                 ctx.beginPath();
-                for( var i = 0; i < controlPoints.length-1; ++i )
+                for( let i = 0; i < controlPoints.length-1; ++i )
                 {
                     // Connect every pair of adjacent control points with a line
                     // except the two adjacent off_curve points.
@@ -218,7 +216,7 @@ onRuntimeInitialized: function() {
                 // We want to draw off curve and on-curve in different colors.
                 // On-curve get a special color, so draw off-curve first.
                 ctx.beginPath();
-                for( var i = 1; i < controlPoints.length; ++i )
+                for( let i = 1; i < controlPoints.length; ++i )
                 {
                     if( i % 3 === 0 ) continue;
                     DrawCircle( controlPoints[i] );
@@ -227,7 +225,7 @@ onRuntimeInitialized: function() {
                 
                 ctx.fillStyle = kInterpPointColor;
                 ctx.beginPath();
-                for( var i = 0; i < controlPoints.length; ++i )
+                for( let i = 0; i < controlPoints.length; ++i )
                 {
                     if( i % 3 !== 0 ) continue;
                     DrawCircle( controlPoints[i] );
@@ -239,48 +237,54 @@ onRuntimeInitialized: function() {
     // Create the need_redisplay function.
     // We use `requestAnimationFrame()` to avoid re-computing curve points and
     // re-drawing the canvas unnecessarily.
-    var need_redisplay = function() {
+    function need_redisplay()
+    {
         window.requestAnimationFrame( refresh_data );
-        }
+    }
     
     function event_xy_in_container( evt, container )
     {
-        // The advice to use offsetLeft/Top:
-        //     http://docs.jquery.com/Tutorials:Mouse_Position
-        // is wrong.
-        // Instead, using jQuery's offset() gives the desired result:
-        var x = evt.pageX - $(container).offset().left;
-        var y = evt.pageY - $(container).offset().top;
+        const rect = container.getBoundingClientRect();
+        const x = evt.clientX - rect.left;
+        const y = evt.clientY - rect.top;
         
         return [ x, y ];
     }
-    var move_handlers = function() {
-        var result = {};
+    let move_handlers = function() {
+        let result = {};
         
-        var picked = null;
+        let picked = null;
         result.mousedown = function( evt )
             {
                 // A mouse down shouldn't bubble, so that dragging doesn't select text.
                 evt.preventDefault();
                 
-                var xy = event_xy_in_container( evt, this );
+                const xy = event_xy_in_container( evt, this );
                 picked = PickControlPoint( xy );
+                
+                // If we don't pick anything, add a point.
+                if( picked === null ) {
+                    curvelib.AddPoint( xy );
+                }
+                else {
+                    // Set up the move event handler:
+                    this.addEventListener( "mousemove", result.mousemove );
+                    // Stop moving on mouseup (which must be on the window, not the element).
+                    window.addEventListener( "mouseup", result.mouseup );
+                    
+                    // NOTE: If we wanted to forward the event
+                    //       to result.mousemove(), we would do it
+                    //       using call() with the correct 'this' parameter.
+                    // result.mousemove.call( this, evt );
+                }
+                
+                // No matter what, refresh the screen.
                 need_redisplay();
-                
-                // Set up the move event handler:
-                $(this).mousemove( result.mousemove );
-                // Stop moving on mouseup (which must be on the window, not the element).
-                $(window).mouseup( result.mouseup );
-                
-                // NOTE: If we wanted to forward the event
-                //       to result.mousemove(), we would do it
-                //       using call() with the correct 'this' parameter.
-                // result.mousemove.call( this, evt );
             };
         
         result.mousemove = function( evt )
             {
-                var xy = event_xy_in_container( evt, this );
+                let xy = event_xy_in_container( evt, this );
                 if( picked !== null )
                 {
                     curvelib.SetControlPoint( picked, xy );
@@ -292,58 +296,16 @@ onRuntimeInitialized: function() {
             {
                 // Stop moving on mouseup.
                 // NOTE: this is the window here, not #curve_canvas.
-                $('#curve_canvas').off( 'mousemove' );
-                $(window).off( 'mouseup' );
+                document.getElementById('curve_canvas').removeEventListener( "mousemove", result.mousemove );
+                window.removeEventListener( "mouseup", result.mouseup );
             };
         
         return result;
         }();
     
-    var add_handlers = function() {
-        var result = {};
-        
-        result.mousedown = function( evt )
-            {
-                // A mouse down shouldn't bubble, so that dragging doesn't select text.
-                evt.preventDefault();
-                
-                var xy = event_xy_in_container( evt, this );
-                // Too often I forget to switch to move mode and I create
-                // a second control point in the same place.
-                // Ignore clicks on picked points.
-                if( PickControlPoint( xy ) !== null )
-                {
-                    console.log( "Not adding a point on top of an existing control point; create it to the side and move it if you really mean it." );
-                    return;
-                }
-                
-                curvelib.AddPoint( xy );
-                need_redisplay();
-            };
-        
-        return result;
-        }();
-    
-    function set_mouse_mode( mode )
+    function setup_mouse_handlers()
     {
-        // Disable the current event listeners.
-        $('#curve_canvas').off( 'mousedown' );
-        $('#curve_canvas').off( 'mousemove' );
-        $( window ).off( 'mouseup' );
-        
-        // Enable the correct mouse-down event listener.
-        if( 'move' == mode )
-        {
-            $("#curve_canvas").mousedown( move_handlers.mousedown );
-        }
-        else if( 'add' == mode )
-        {
-            $("#curve_canvas").mousedown( add_handlers.mousedown );
-        }
-        else
-        {
-            alert( "Unknown mouse mode: " + mode );
-        }
+        document.getElementById('curve_canvas').addEventListener( "mousedown", move_handlers.mousedown );
     }
     
     function PickControlPoint( xy )
@@ -351,12 +313,12 @@ onRuntimeInitialized: function() {
         if( curveData === null ) return null;
         
         // Pick within this factor of the radius.
-        var kTolerance = 2.;
+        const kTolerance = 2.;
         
-        for( var i = 0; i < curveData.controlPoints.length; ++i )
+        for( let i = 0; i < curveData.controlPoints.length; ++i )
         {
-            var dx = curveData.controlPoints[i][0] - xy[0];
-            var dy = curveData.controlPoints[i][1] - xy[1];
+            const dx = curveData.controlPoints[i][0] - xy[0];
+            const dy = curveData.controlPoints[i][1] - xy[1];
             
             if( dx*dx + dy*dy < kTolerance*kPointRadius*kPointRadius*kTolerance )
             {
@@ -371,7 +333,7 @@ onRuntimeInitialized: function() {
     ///
     /// Testing code.
     ///
-    var kTestDataLong1 = [
+    const kTestDataLong1 = [
         [ 403, 74 ],
         [ 242, 186 ],
         [ 217, 321 ],
@@ -383,10 +345,10 @@ onRuntimeInitialized: function() {
         ];
     function setup_test_data( xys )
     {
-        curvelib.ClearAll();
-        for( var i = 0; i < xys.length; ++i )
+        clear_curve();
+        for( let i = 0; i < xys.length; ++i )
         {
-            var xy = xys[i];
+            const xy = xys[i];
             curvelib.AddPoint( xy );
         }
         refresh_data();
@@ -397,8 +359,8 @@ onRuntimeInitialized: function() {
     ///
     // Setup our global variables.
     {
-        canvas = $("#curve_canvas").get(0);
-        ctx = $("#curve_canvas").get(0).getContext("2d");
+        canvas = document.getElementById('curve_canvas');
+        ctx = canvas.getContext("2d");
         
         curvelib = new Module.CurveManager();
 
@@ -406,36 +368,34 @@ onRuntimeInitialized: function() {
     }
     function setup_callbacks()
     {
-        $("#curveType").change( function() {
-            var style = $("#curveType option:selected").val();
-            curvelib.SetCurveType( style );
+        let curveTypeElement = document.getElementById('curveType');
+        curveTypeElement.addEventListener( "change", function() {
+            const curveType = get_approach();
+            curvelib.SetCurveType( curveType );
             refresh_data();
             } );
         // Call the style-changed function to set the module's style to
         // what it is here in the HTML.
-        $("#curveType").change();
+        curveTypeElement.dispatchEvent(new Event('change'));
         
-        $("#show_control_points").change( function() {
-            var show_control_points = $("#show_control_points").is(':checked');
+        let show_control_points_element = document.getElementById('show_control_points');
+        show_control_points_element.addEventListener( "change", function() {
             need_redisplay();
             } );
         // Call the changed function to set the module's value to
         // what it is here in the HTML.
-        $("#show_control_points").change();
+        show_control_points_element.dispatchEvent(new Event('change'));
         
-        $("#clear").click( function() {
-            curvelib.ClearAll();
+        document.getElementById('clear').addEventListener( "click", function() {
+            clear_curve();
             refresh_data();
             } );
         
-        $("#test_data_long1").click( function() {
+        document.getElementById("test_data_long1").addEventListener( "click", function() {
             setup_test_data( kTestDataLong1 );
             } );
         
-        $("input[name=mouse_mode]").change( function() {
-            set_mouse_mode( $("input[name=mouse_mode]:checked").val() );
-            } );
-        set_mouse_mode( $("input[name=mouse_mode]:checked").val() );
+        setup_mouse_handlers();
     }
 }};
 </script>

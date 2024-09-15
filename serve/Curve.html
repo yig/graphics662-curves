@@ -17,21 +17,16 @@ body
 
 /* http://stackoverflow.com/questions/7059039/how-to-prevent-accidental-select-drag-highlight-on-webpage-when-drawing-off-html */
 /* UPDATE: evt.preventDefault() in a mouse down callback actually works. */
-.canvasholder
+#canvasholder
 {
-  -moz-user-select: none;
-  -khtml-user-select: none;
-  -webkit-user-select: none;
   user-select: none;
+}
+#canvasholder > form {
+    padding-bottom: 1ex;
 }
 canvas
 {
     outline: 1px solid #000;
-}
-
-#nacl_holder embed
-{
-    float: left;
 }
 </style>
 
@@ -42,8 +37,6 @@ canvas
 <form action="">
 <input type="button" id="clear" name="clear" value="Clear">
 <input type="button" id="test_data_long1" name="test_data_long1" value="Setup Test Spline">
-<label for="add"><input type="radio" name="mouse_mode" value="add" id="add" checked="checked">Add Point</label>
-<label for="move"><input type="radio" name="mouse_mode" value="move" id="move">Move Point</label>
 <select name="curveType" id="curveType">
 <option value="CubicBezierBernstein" selected="selected">CubicBezierBernstein</option>
 <option value="CubicBezierCasteljau">CubicBezierCasteljau</option>
@@ -265,17 +258,25 @@ import { WebSocketClient } from './js/websocket-client.js';
                 
                 const xy = event_xy_in_container( evt, this );
                 picked = PickControlPoint( xy );
+                
+                // If we don't pick anything, add a point.
+                if( picked === null ) {
+                    curvelib.send( JSON.stringify( { "command": "AddPoint", "point": xy } ) );
+                }
+                else {
+                    // Set up the move event handler:
+                    this.addEventListener( "mousemove", result.mousemove );
+                    // Stop moving on mouseup (which must be on the window, not the element).
+                    window.addEventListener( "mouseup", result.mouseup );
+                    
+                    // NOTE: If we wanted to forward the event
+                    //       to result.mousemove(), we would do it
+                    //       using call() with the correct 'this' parameter.
+                    // result.mousemove.call( this, evt );
+                }
+                
+                // No matter what, refresh the screen.
                 need_redisplay();
-                
-                // Set up the move event handler:
-                this.addEventListener( "mousemove", result.mousemove );
-                // Stop moving on mouseup (which must be on the window, not the element).
-                window.addEventListener( "mouseup", result.mouseup );
-                
-                // NOTE: If we wanted to forward the event
-                //       to result.mousemove(), we would do it
-                //       using call() with the correct 'this' parameter.
-                // result.mousemove.call( this, evt );
             };
         
         result.mousemove = function( evt )
@@ -299,54 +300,9 @@ import { WebSocketClient } from './js/websocket-client.js';
         return result;
         }();
     
-    let add_handlers = function() {
-        let result = {};
-        
-        result.mousedown = function( evt )
-            {
-                // A mouse down shouldn't bubble, so that dragging doesn't select text.
-                evt.preventDefault();
-                
-                let xy = event_xy_in_container( evt, this );
-                // Too often I forget to switch to move mode and I create
-                // a second control point in the same place.
-                // Ignore clicks on picked points.
-                if( PickControlPoint( xy ) !== null )
-                {
-                    console.log( "Not adding a point on top of an existing control point; create it to the side and move it if you really mean it." );
-                    return;
-                }
-                
-                curvelib.send( JSON.stringify( { "command": "AddPoint", "point": xy } ) );
-                need_redisplay();
-            };
-        
-        return result;
-        }();
-    
-    function set_mouse_mode( mode )
+    function setup_mouse_handlers()
     {
-        let curve_canvas = document.getElementById('curve_canvas');
-        
-        // Disable the current event listeners.
-        curve_canvas.removeEventListener( "mousedown", add_handlers.mousedown );
-        curve_canvas.removeEventListener( "mousedown", move_handlers.mousedown );
-        curve_canvas.removeEventListener( "mousemove", move_handlers.mousemove );
-        window.removeEventListener( "mouseup", move_handlers.mouseup );
-        
-        // Enable the correct mouse-down event listener.
-        if( 'move' == mode )
-        {
-            curve_canvas.addEventListener( "mousedown", move_handlers.mousedown );
-        }
-        else if( 'add' == mode )
-        {
-            curve_canvas.addEventListener("mousedown", add_handlers.mousedown );
-        }
-        else
-        {
-            alert( "Unknown mouse mode: " + mode );
-        }
+        document.getElementById('curve_canvas').addEventListener( "mousedown", move_handlers.mousedown );
     }
     
     function PickControlPoint( xy )
@@ -388,7 +344,7 @@ import { WebSocketClient } from './js/websocket-client.js';
         ];
     function setup_test_data( xys )
     {
-        clear_curve()
+        clear_curve();
         for( let i = 0; i < xys.length; ++i )
         {
             const xy = xys[i];
@@ -442,14 +398,7 @@ import { WebSocketClient } from './js/websocket-client.js';
             setup_test_data( kTestDataLong1 );
             } );
         
-        let mouse_mode_els = document.querySelectorAll( "input[name=mouse_mode]" );
-        for( let el of mouse_mode_els )
-        {
-            el.addEventListener( "change", function() {
-                set_mouse_mode( document.querySelector("input[name=mouse_mode]:checked").value );
-            } );
-        }
-        set_mouse_mode( document.querySelector("input[name=mouse_mode]:checked").value );
+        setup_mouse_handlers();
     }
     
     /*
