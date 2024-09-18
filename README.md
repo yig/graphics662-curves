@@ -72,7 +72,7 @@ You can debug the GUI, too. After you open the web page, the browser will connec
 
 If you are using the optional `BUILTIN_WEBSOCKET_SERVER`, then you can directly launch the `CurveWSServer` target in your debugger.
 
-You can [debug WebAssembly directly in Chrome](https://developer.chrome.com/docs/devtools/wasm/). It works great! Compile in debug mode (`cmake --build build-web -DCMAKE_BUILD_TYPE=Debug` or use `ccmake --build build-web` and choose Debug). Install the Chrome [C/C++ DevTools Support](https://chromewebstore.google.com/detail/cc++-devtools-support-dwa/pdcpmagijalfljmkmjngeonclgbbannb) extension. Set breakpoints in your source code, which can be found in Chrome Developer Tools > Sources > `file://`. Make sure to "Disable cache" under Chrome Developer Tools > Network so that you can refresh the page after recompiling. You can also debug [from inside VSCode](https://floooh.github.io/2023/11/11/emscripten-ide.html).
+You can [debug WebAssembly directly in Chrome](https://developer.chrome.com/docs/devtools/wasm/). It works great! Compile in debug mode (`cmake --build build-web -DCMAKE_BUILD_TYPE=Debug` or use `ccmake --build build-web` and choose Debug). Install the Chrome [C/C++ DevTools Support](https://chromewebstore.google.com/detail/cc++-devtools-support-dwa/pdcpmagijalfljmkmjngeonclgbbannb) extension. Set breakpoints in your source code, which can be found in Chrome Developer Tools > Sources > `file://`. [Here is a screenshot](docs/Chrome%20WASM%20DevTools.png). Make sure to "Disable cache" under Chrome Developer Tools > Network so that you can refresh the page after recompiling. You can also debug [from inside VSCode](https://floooh.github.io/2023/11/11/emscripten-ide.html).
 
 
 ## Handing In
