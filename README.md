@@ -33,8 +33,7 @@ To compile and run the assignment: `cmake --build build-dir --target run_GUI`. T
 
 There is a tester available:
   ```
-  cd test
-  ctest --verbose
+  ctest --test-dir build-dir/test --verbose
   ```
 
 ## (Optional) Compiling and Running with WebAssembly
