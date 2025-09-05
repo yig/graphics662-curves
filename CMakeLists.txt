@@ -136,7 +136,7 @@ else()
         FetchContent_Declare(
             LibDataChannel
             GIT_REPOSITORY https://github.com/paullouisageneau/libdatachannel
-            GIT_TAG v0.21.2
+            GIT_TAG v0.23.1
             GIT_SHALLOW TRUE
             GIT_PROGRESS TRUE
             )
