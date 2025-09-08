@@ -15,5 +15,5 @@ add_test( NAME evaluate COMMAND evaluate )
 ## On Windows, the following line may help build a static binary that can be called from the autograder.
 ## Some platforms can't build entirely static binaries, so I'm leaving it off by default.
 if(WIN32)
-    target_link_libraries(evaluate -static)
+    target_link_libraries(evaluate PRIVATE -static)
 endif()
