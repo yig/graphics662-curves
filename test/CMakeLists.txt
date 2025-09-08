@@ -11,6 +11,11 @@ add_executable( evaluate evaluate.cpp )
 target_link_libraries( evaluate PRIVATE CurveLib doctest::doctest )
 set_target_properties( evaluate PROPERTIES CXX_STANDARD 20 )
 add_test( NAME evaluate COMMAND evaluate )
+## Add a target to run the test
+add_custom_target( run_test
+    COMMAND evaluate
+    USES_TERMINAL
+    )
 
 ## On Windows, the following line may help build a static binary that can be called from the autograder.
 ## Some platforms can't build entirely static binaries, so I'm leaving it off by default.

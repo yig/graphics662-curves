@@ -36,6 +36,11 @@ There is a tester available:
   ctest --test-dir build-dir/test --verbose
   ```
 
+If that command causes trouble, try:
+  ```
+  cmake --build build-dir --target run_test
+  ```
+
 ## (Optional) Compiling and Running with WebAssembly
 
 You can compile your code for the web (to WebAssembly) and run it entirely in-browser with [emscripten](https://emscripten.org). Follow [the instructions to install and activate the Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html). (You don't need `websocketd` for this.)
@@ -65,7 +70,7 @@ Fill in the functions in the file `CurveFunctions.cpp`. That's the only file you
 
 ## Debugging
 
-You can debug the tester binary by running `build-dir/test/evaluate` in your debugger.
+You can debug the tester binary by running `build-dir/test/evaluate` or the `run_test` target in your debugger.
 
 You can debug the GUI, too. After you open the web page, the browser will connect via websocket to `websocketd`, which will launch the `serve/CurveJSONServer` binary. Then you can attach to the `CurveJSONServer` process in your debugger. If this doesn't work for you, try the `BUILTIN_WEBSOCKET_SERVER` approach.
 
