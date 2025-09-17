@@ -55,8 +55,14 @@ int main( int argc, char* argv[] ) {
     server.onClient( []( auto client ) {
         std::cout << "Client connected!" << std::endl;
         
-        // auto manager = std::make_shared<Curve::CurveManager>();
-        auto manager = new Curve::CurveManager();
+        // For some reason, I can't make CurveManager a stack variable, even when I make the lambda capture [&] instead of [=].
+        // In fact, nothing works when I use capture by reference.
+        // Perhaps onClient() returns immediately, and so stack variables goes out of scope.
+        // The only solution then is a raw pointer or a shared pointer.
+        // A shared pointer is better, since it will get cleaned up automatically when the client disconnects.
+        // Curve::CurveManager manager;
+        auto manager = std::make_shared<Curve::CurveManager>();
+        // auto manager = new Curve::CurveManager();
         
         client->onMessage(
             // Capture `client` and `manager` by value, since they are `shared_ptr`s.
