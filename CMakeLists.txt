@@ -32,7 +32,7 @@ add_library(CurveLib OBJECT
     src/CurveFunctions.cpp
     src/Curve.cpp
     )
-# set_target_properties( CurveLib PROPERTIES CXX_STANDARD 20 )
+# target_compile_features( CurveLib PRIVATE cxx_std_20 )
 target_include_directories( CurveLib PUBLIC src )
 target_link_libraries( CurveLib
     PUBLIC
@@ -49,7 +49,8 @@ if(CMAKE_SYSTEM_NAME MATCHES "Emscripten")
     )
     
     ## Copy the executable to the `serve` directory
-    set_target_properties( curvelib PROPERTIES LINK_FLAGS "-s SINGLE_FILE=1" )
+    target_link_options( curvelib PRIVATE "-sSINGLE_FILE=1 " )
+    target_link_options( curvelib PRIVATE "-sALLOW_MEMORY_GROWTH=1" )
     add_custom_command( TARGET curvelib POST_BUILD
       COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:curvelib> ${CMAKE_SOURCE_DIR}/serve/
     )
@@ -153,7 +154,7 @@ else()
                 nlohmann_json::nlohmann_json
                 LibDataChannel::LibDataChannel
         )
-        set_target_properties( CurveWSServer PROPERTIES CXX_STANDARD 20 )
+        target_compile_features( CurveWSServer PRIVATE cxx_std_20 )
         
         ## Run the executable from the `serve` directory
         # include(FindPython3)
