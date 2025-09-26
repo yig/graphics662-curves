@@ -112,9 +112,10 @@ When done, upload a zip of your entire directory. Do not include your build dire
 
 3. **(20 points) Catmull-Rom splines**
 
-    1. (10 points) Same as 1.1 above, except for a centripetal Catmull-Rom spline with an array of 2D control points of the form $[ \mathbf{p} _ 0 = [x _ 0, y _ 0]^T, \mathbf{p} _ 1 = [x _ 1, y _ 1]^T, … ].$ Each piece of the Catmull-Rom curve is defined by four control points: $\mathbf{p} _ i, \mathbf{p} _ {i+1}, \mathbf{p} _ {i+2}, \mathbf{p} _ {i+3}.$ The function you must fill in is `EvaluateCatmullRomSpline()`; call `EvaluateCatmullRomCurve()` with the appropriate control points, $t$ value, and the given *alpha* value (which will be set to .5 for centripetal).  
+    1. (10 points) Same as 1.1 above, except for a uniform Catmull-Rom spline with an array of 2D control points of the form $[ \mathbf{p} _ 0 = [x _ 0, y _ 0]^T, \mathbf{p} _ 1 = [x _ 1, y _ 1]^T, … ].$ Each piece of the Catmull-Rom curve is defined by four control points: $\mathbf{p} _ i, \mathbf{p} _ {i+1}, \mathbf{p} _ {i+2}, \mathbf{p} _ {i+3}.$ The function you must fill in is `EvaluateCatmullRomSpline()`; call `EvaluateCatmullRomCurve()` with the appropriate control points and $t$ value. Ignore the given *alpha* value (which will be set to 0 for uniform), unless you plan to implement the bonus.  
     **Note:** To make your Catmull-Rom spline interpolate the first and last control points, also evaluate, as the first piece, $2\mathbf{p} _ 0 -\mathbf{p} _ 1, \mathbf{p} _ 0, \mathbf{p} _ 1, \mathbf{p} _ 2,$ and, as the last piece, $\mathbf{p} _ {n-2}, \mathbf{p} _ {n-1}, \mathbf{p} _ n, 2\mathbf{p} _ n-\mathbf{p} _ {n-1}.$  
-    **Note:** The matrix form of Catmull-Rom curves in the lecture notes is filled with values that have already been multiplied by *alpha*=½. Factor out ½ from the matrix and then multiply it by the *alpha* parameter to evaluate Catmull-Rom curves correctly.
+    **Note:** The matrix form of Catmull-Rom curves in the lecture notes is filled with values that have already been multiplied by *alpha*=½. Factor out ½ from the matrix and then multiply it by the *alpha* parameter to evaluate Catmull-Rom curves correctly.  
+    **(bonus 5 points)** Respect the `alpha` parameter. The default `alpha = 0` is for uniform Catmull-Rom splines. Setting `alpha = 0.5` will give you centripetal, foldover-free Catmull-Rom splines.
     
     2. (10 points) Evaluate each piece of the Catmull-Rom spline using any technique you like; fill in `EvaluateCatmullRomCurve()`.
 

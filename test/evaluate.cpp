@@ -46,7 +46,8 @@ const std::vector< std::tuple< std::string, std::function<Points(const Points& p
     
     { "EvaluateCubicHermiteSpline", EvaluateCubicHermiteSpline, GetEvaluateCubicHermiteSpline },
     
-    { "EvaluateCatmullRomSpline", []( auto pts, auto s ) { return EvaluateCatmullRomSpline( pts, s, 0.5 ); }, GetEvaluateCatmullRomSpline },
+    { "EvaluateCatmullRomSplineUniform", []( auto pts, auto s ) { return EvaluateCatmullRomSpline( pts, s, 0.0 ); }, GetEvaluateCatmullRomSpline },
+    { "EvaluateCatmullRomSplineCentripetal", []( auto pts, auto s ) { return EvaluateCatmullRomSpline( pts, s, 0.5 ); }, GetEvaluateCatmullRomSpline },
     
     { "EvaluateCubicBSpline", EvaluateCubicBSpline, GetEvaluateCubicBSpline },
 };
@@ -75,34 +76,6 @@ void ComparePoints( const Points& result, const Points& truth ) {
 }
 
 }
-
-/*
-        int SamplesPerCurve = 20;
-        if( request.has_param( "SamplesPerCurve" ) ) {
-            SamplesPerCurve = std::stoi( request.get_param_value( "SamplesPerCurve" ) );
-        }
-        
-        // For Catmull-Rom Splines
-        double alpha = 0.5;
-        if( request.has_param( "Alpha" ) ) {
-            alpha = std::stod( request.get_param_value( "Alpha" ) );
-        }
-        
-        Curve::Points result;
-        if( approach == "EvaluateCubicBezierSplineBernstein" ) {
-            result = Curve::EvaluateCubicBezierSpline( ControlPoints, SamplesPerCurve, Curve::EvaluateCubicBezierCurveApproach::Bernstein );
-        } else if( approach == "EvaluateCubicBezierSplineMatrix" ) {
-            result = Curve::EvaluateCubicBezierSpline( ControlPoints, SamplesPerCurve, Curve::EvaluateCubicBezierCurveApproach::Matrix );
-        } else if( approach == "EvaluateCubicBezierSplineCasteljau" ) {
-            result = Curve::EvaluateCubicBezierSpline( ControlPoints, SamplesPerCurve, Curve::EvaluateCubicBezierCurveApproach::Matrix );
-        } else if( approach == "EvaluateCubicHermiteSpline" ) {
-            result = Curve::EvaluateCubicHermiteSpline( ControlPoints, SamplesPerCurve );
-        } else if( approach == "EvaluateCatmullRomSpline" ) {
-            result = Curve::EvaluateCatmullRomSpline( ControlPoints, SamplesPerCurve, alpha );
-        } else if( approach == "EvaluateCubicBSpline" ) {
-            result = Curve::EvaluateCubicBSpline( ControlPoints, SamplesPerCurve );
-        } else {
-*/
 
 TEST_CASE( "EvaluateSplines" ) {
     

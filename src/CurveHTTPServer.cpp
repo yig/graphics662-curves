@@ -92,7 +92,7 @@ int main( int argc, char* argv[] ) {
         }
         
         // For Catmull-Rom Splines
-        double alpha = 0.5;
+        double alpha = 0.0;
         if( body.contains( "Alpha" ) ) {
             body.at("Alpha").get_to( alpha );
         }
